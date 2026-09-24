@@ -1,0 +1,13 @@
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      PUBLIC_IP: ${PUBLIC_IP:?Set PUBLIC_IP in .env}
+    ports:
+      - "443:443"
+    volumes:
+      - ./deploy/ip/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/ip/certs:/certs:ro

@@ -10,6 +10,8 @@ secrets*.json
 *.p12
 *.pfx
 *.token
+deploy/ip/acme/
+deploy/ip/certs/
 
 # Персональные данные и локальная база
 data/
