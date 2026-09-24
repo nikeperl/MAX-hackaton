@@ -1,0 +1,32 @@
+# Локальные настройки и секреты
+.env
+.env.*
+!.env.example
+credentials*.json
+service-account*.json
+secrets*.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.token
+
+# Персональные данные и локальная база
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.db-shm
+*.db-wal
+
+# Зависимости, сборка и временные файлы
+node_modules/
+dist/
+playwright-report/
+test-results/
+coverage/
+*.log
+.cache/
+.vite/
+.DS_Store

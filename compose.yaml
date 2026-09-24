@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DEMO_MODE: "false"
+      DATABASE_PATH: /app/data/vovremya.sqlite
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - app-data:/app/data
+volumes:
+  app-data:
