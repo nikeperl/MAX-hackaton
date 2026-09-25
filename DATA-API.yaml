@@ -1,0 +1,101 @@
+# Собственная декларативная схема проверок v1: формат организаторов в PDF не задан.
+# Подстановки base_url/token/event_id выполняет проверяющий, это не исполняемый runner.
+schema_version: "1.0"
+solution: "Вовремя"
+base_url: "https://84.237.53.134/api"
+local_demo_url: "http://localhost:3002/api"
+public_endpoint_verified: false
+authentication:
+  role: user
+  production: "POST /session с действующими подписанными initData из MAX; пароль не используется"
+  local_demo: "POST /session с {}; сохранить ответ token; отдельная синтетическая учётная запись на каждый вход"
+  headers:
+    Authorization: "Bearer ${token}"
+    Content-Type: application/json
+test_data: tests/fixtures/events.json
+checks:
+  - id: health
+    role: anonymous
+    method: GET
+    path: /health
+    parameters: {}
+    expected:
+      status: [200]
+      content_type: application/json
+      required_fields: [ok]
+      values: { ok: true }
+  - id: session
+    role: anonymous
+    method: POST
+    path: /session
+    parameters:
+      body: { initData: "${max_init_data}" }
+    expected:
+      status: [200]
+      content_type: application/json
+      required_fields: [token, user]
+  - id: create
+    role: user
+    method: POST
+    path: /events
+    parameters:
+      headers: { Authorization: "Bearer ${token}" }
+      body: { templateId: passport, title: "Тест: замена паспорта", category: documents, baseDate: "2006-10-20", age: 20, reminders: [30, 7, 1, 0] }
+    expected:
+      status: [201]
+      content_type: application/json
+      required_fields: [id, dueDate, milestoneDate, completed]
+      values: { dueDate: "2027-01-18", milestoneDate: "2026-10-20", completed: false }
+      capture: { event_id: id }
+  - id: list
+    role: user
+    method: GET
+    path: /events
+    parameters:
+      headers: { Authorization: "Bearer ${token}" }
+    expected:
+      status: [200]
+      content_type: application/json
+      type: array
+      item_required_fields: [id, title, dueDate, completed]
+  - id: settings
+    role: user
+    method: PUT
+    path: /settings
+    parameters:
+      headers: { Authorization: "Bearer ${token}" }
+      body: { enabled: true, hour: 9, timezone: Asia/Novosibirsk, privateMessages: true }
+    expected:
+      status: [200]
+      content_type: application/json
+      required_fields: [enabled, hour, timezone, privateMessages]
+  - id: complete
+    role: user
+    method: PATCH
+    path: /events/${event_id}
+    parameters:
+      headers: { Authorization: "Bearer ${token}" }
+      body: { completed: true }
+    expected:
+      status: [200]
+      content_type: application/json
+      required_fields: [id, completed]
+      values: { completed: true }
+  - id: delete
+    role: user
+    method: DELETE
+    path: /events/${event_id}
+    parameters:
+      headers: { Authorization: "Bearer ${token}" }
+    expected:
+      status: [204]
+      body: null
+  - id: unauthorized
+    role: anonymous
+    method: GET
+    path: /events
+    parameters: {}
+    expected:
+      status: [401]
+      content_type: application/json
+      required_fields: [error]

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Вовремя — Забота о людях</title>
+<style>
+@font-face { font-family: Manrope; src: url('../node_modules/@fontsource-variable/manrope/files/manrope-cyrillic-wght-normal.woff2'); font-weight: 200 800; }
+@font-face { font-family: Manrope; src: url('../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2'); font-weight: 200 800; unicode-range: U+0000-00FF; }
+@page { size: 1280px 720px; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 22px/1.5 Manrope, Arial, sans-serif; color: #172443; background: #f7f9ff; }
+.slide { width: 1280px; height: 720px; padding: 54px 64px 68px; position: relative; overflow: hidden; break-after: page; background: radial-gradient(ellipse at 100% 0, #e1faff, transparent 45%), #f7f9ff; }
+.slide:last-child { break-after: auto; }
+h1,h2,h3,p { margin: 0; }
+h1 { font-size: 76px; line-height: 1.1; letter-spacing: -3px; }
+h2 { font-size: 42px; line-height: 1.2; letter-spacing: -1.5px; margin: 12px 0 30px; max-width: 1100px; }
+h3 { font-size: 24px; line-height: 1.3; margin-bottom: 14px; }
+p + p { margin-top: 14px; }
+.eyebrow { color: #0756f5; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+.muted { color: #657493; }
+.small { font-size: 17px; }
+.tiny { font-size: 14px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.three { grid-template-columns: repeat(3,1fr); }
+.card { background: white; padding: 28px; border-radius: 24px; box-shadow: 0 8px 24px rgba(30,67,190,.1); }
+.accent { background: linear-gradient(135deg,#26a9f4,#0756f5 52%,#6825f4); color: #f5fbff; }
+.accent .muted { color: #e3eeff; }
+.pill { display: inline-block; border-radius: 16px; padding: 8px 15px; background: #eef3ff; color: #0756f5; font-size: 16px; font-weight: 700; }
+.footer { position: absolute; bottom: 28px; left: 64px; right: 64px; display: flex; justify-content: space-between; font-size: 14px; color: #657493; }
+.logo { display: inline-flex; width: 66px; height: 66px; align-items: center; justify-content: center; border-radius: 23px; background: linear-gradient(135deg,#26a9f4,#0756f5 52%,#6825f4); color: white; box-shadow: 0 8px 24px #0756f533; font-size: 42px; margin-bottom: 28px; }
+a { color: #0756f5; text-decoration: underline; text-underline-offset: 3px; }
+code { font-family: Consolas, monospace; font-size: .85em; overflow-wrap: anywhere; }
+.spaced { margin-top: 24px; }
+.number { color: #0756f5; font-size: 52px; font-weight: 800; line-height: 1.2; margin-bottom: 14px; }
+.flow { display: flex; gap: 16px; align-items: stretch; }
+.flow .card { flex: 1; padding: 22px; font-size: 17px; }
+.arrow { color: #0756f5; align-self: center; font-size: 30px; }
+.screenshot { width: 100%; height: 340px; object-fit: cover; object-position: top; border-radius: 18px; border: 1px solid #e6ecff; }
+.row { display: grid; grid-template-columns: 250px 1fr; gap: 22px; padding: 15px 0; border-bottom: 1px solid #e4ebfb; font-size: 19px; }
+.row:last-child { border: 0; }
+.technical h2 { margin: 8px 0 20px; }
+.technical .card { padding: 22px; font-size: 17px; }
+.technical p + p { margin-top: 10px; }
+.roadmap h2 { font-size: 38px; margin-bottom: 20px; }
+.roadmap .row { padding: 12px 0; font-size: 18px; }
+.roadmap .spaced { margin-top: 16px; }
+.warning { background: #fff2e8; color: #8c4921; border-radius: 16px; padding: 12px 18px; font-size: 16px; }
+</style>
+</head>
+<body>
+<section class="slide technical">
+  <div class="eyebrow">Служебный слайд · техническая проверка · 25.09.2026</div>
+  <h2>Доступ и воспроизведение</h2>
+  <div class="grid">
+    <div class="card">
+      <p><b>Бот MAX:</b> [вставить подтверждённую ссылку]. В текущей конфигурации стоит отображаемое имя «Вовремя».</p>
+      <p><b>Репозиторий:</b> <a href="https://github.com/nikeperl/MAX-hackaton">github.com/nikeperl/MAX-hackaton</a></p>
+      <p><b>Коммит исходного кода:</b><br><code>6550b9273d8f3844f3856b4f992f508b0774b395</code></p>
+      <p><b>Собственный API:</b> <code>https://84.237.53.134/api</code><br>Адрес из конфигурации; внешняя доступность ещё не подтверждена.</p>
+      <p><b>Локально:</b><br><code>docker compose -f compose.demo.yaml up -d --build</code><br><code>http://localhost:3002</code></p>
+    </div>
+    <div class="card">
+      <p><b>Проверка в MAX:</b> /start → /passport 20.10.2006 20 → /time 9 Asia/Novosibirsk → /resume → /show код → /done код.</p>
+      <p><b>Учётные записи:</b> свой MAX-профиль; логин/пароль приложения не требуются. В Docker-демо создаётся отдельный гостевой профиль.</p>
+      <p><b>Закрытый комплект доступа:</b> MAX_BOT_TOKEN, MAX_WEBHOOK_SECRET, MAX_BOT_USERNAME, APP_URL. Рабочие значения передаются организаторам отдельно, не в Git.</p>
+      <p><b>API-контракт:</b> openapi.json, DATA-API.yaml.<br><b>Примеры:</b> tests/fixtures/events.json.</p>
+    </div>
+  </div>
+  <p class="warning spaced">Черновик для сдачи: заполнить ссылку, команду и закрытый комплект доступа; подтвердить живой сценарий в MAX.</p>
+  <div class="footer"><span>Вовремя · трек «Забота о людях»</span><span>01 / 10</span></div>
+</section>
+<section class="slide">
+  <div class="logo">✓</div>
+  <div class="eyebrow">Забота о людях · MVP в MAX</div>
+  <h1 style="margin:20px 0 24px">Важные сроки.<br>Меньше забот.</h1>
+  <p style="max-width:850px;font-size:28px">Вовремя сохраняет дату, напоминает в чате<br>и помогает понять следующий шаг к услуге.</p>
+  <div class="spaced"><span class="pill">Чат-бот + мини-приложение</span></div>
+  <p class="small muted spaced">Команда: [название и участники — заполнить перед сдачей]</p>
+  <div class="footer"><span>Вовремя · исполнительное резюме</span><span>02 / 10</span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Один приоритетный пользователь</div>
+  <h2>Первая самостоятельная<br>замена паспорта в 20 лет</h2>
+  <div class="grid">
+    <div class="card accent"><h3>Начинаем с узкого сегмента</h3><p>Житель Новосибирской области 19–20 лет, пользуется MAX и готовится заменить паспорт по возрасту.</p><p class="muted small">Регион и сегмент — выбор для пилота, а не ограничение федерального правила.</p></div>
+    <div class="card"><h3>Проблема для проверки</h3><p>Даже когда услуга доступна онлайн, человеку нужно вовремя вспомнить о сроке, подготовиться и вернуться к следующему действию.</p><p class="muted small">Частоту этой проблемы и готовность пользоваться помощником ещё нужно подтвердить интервью.</p></div>
+  </div>
+  <p class="small muted spaced">Кабинетный анализ: <a href="https://www.mfc-nso.ru/services/detail/140589">карточка услуги МФЦ НСО</a>, <a href="https://www.mfc-nso.ru/">официальный портал региона</a>. Приём заявления и решение остаются у ведомства.</p>
+  <div class="footer"><span>Гипотеза потребности · интервью ещё не проведены</span><span>03 / 10</span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Сценарий целиком в чате</div>
+  <h2>От даты до понятного действия</h2>
+  <div class="flow">
+    <div class="card"><div class="number">01</div><h3>Создать</h3><code>/passport<br>20.10.2006 20</code><p class="spaced">Расчёт: 18.01.2027</p></div>
+    <span class="arrow">→</span>
+    <div class="card"><div class="number">02</div><h3>Включить</h3><code>/time 9<br>Asia/Novosibirsk<br>/resume</code><p class="spaced">Своё местное время</p></div>
+    <span class="arrow">→</span>
+    <div class="card"><div class="number">03</div><h3>Подготовиться</h3><p>Сообщение от бота</p><code>/show код</code><p class="spaced">Шаги и источник</p></div>
+    <span class="arrow">→</span>
+    <div class="card"><div class="number">04</div><h3>Завершить</h3><p>Получить услугу</p><code>/done код</code><p class="spaced">Напоминания прекращаются</p></div>
+  </div>
+  <div class="card spaced small">События общие с календарём. По умолчанию детали в напоминаниях скрыты. Произвольная дата добавляется через <code>/add</code>; документы распознаются в мини-приложении.</div>
+  <div class="footer"><span>Пример с вымышленной датой рождения</span><span>04 / 10</span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Интерфейс</div>
+  <h2>Календарь для обзора. Чат для действий.</h2>
+  <div class="grid" style="grid-template-columns: 1.4fr 1fr">
+    <div class="card" style="padding:16px"><img class="screenshot" src="desktop.png" alt="Интерфейс календаря Вовремя"></div>
+    <div class="card"><h3>Реализовано</h3><p>Календарь и фильтры.<br>Создание и завершение.<br>Шаблоны сроков.<br>OCR фото и PDF.<br>Настройка уведомлений.</p><p class="small muted spaced">Холодный светлый фон, Manrope, белые карточки и градиент #26A9F4 → #0756F5 → #6825F4.</p></div>
+  </div>
+  <p class="small muted spaced">Поддерживаются мобильная ширина и десктоп. Проверку внутри реальных мобильного и веб-клиента MAX нужно завершить отдельно.</p>
+  <div class="footer"><span>Скриншот локального демо · синтетические события</span><span>05 / 10</span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Эффект, который можно измерить</div>
+  <h2>Цели пилота, а не обещанные результаты</h2>
+  <div class="grid three">
+    <div class="card"><div class="number">≤ 2 мин</div><h3>До настройки</h3><p class="small">От /start до события с включёнными напоминаниями. Измеряем медиану времени на 20 участниках.</p></div>
+    <div class="card"><div class="number">≥ 80%</div><h3>Без подсказок</h3><p class="small">Самостоятельно создают напоминание и могут объяснить следующий шаг. Проверяем наблюдением и вопросом после /show.</p></div>
+    <div class="card"><div class="number">≥ 95%</div><h3>Принято MAX</h3><p class="small">В течение 5 минут после расчётного времени при работающем сервере. Измеряем историю доставок; это не показатель прочтения.</p></div>
+  </div>
+  <p class="spaced">Сравним с текущим способом пользователя: ручным календарём или заметкой. Короткий пилот не доказывает снижение просрочек.</p>
+  <p class="small muted spaced">Сбор исследовательских метрик — отдельный протокол с согласия, без копирования текстов документов.</p>
+  <div class="footer"><span>План проверки ценности</span><span>06 / 10</span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Архитектура и проверка</div>
+  <h2>Один профиль. Одна очередь событий.</h2>
+  <div class="flow">
+    <div class="card"><h3>MAX</h3><p>Команды в чате<br>React-календарь</p></div><span class="arrow">→</span>
+    <div class="card"><h3>Node.js API</h3><p>Подпись MAX<br>Секрет webhook<br>Валидация</p></div><span class="arrow">→</span>
+    <div class="card"><h3>SQLite</h3><p>События<br>Входящая очередь<br>Доставки</p></div><span class="arrow">→</span>
+    <div class="card accent"><h3>Планировщик</h3><p>Каждые 15 сек.<br>Повторы при сбое<br>Сообщение MAX</p></div>
+  </div>
+  <div class="grid spaced">
+    <div class="card"><h3>Проверено локально</h3><p class="small">18 серверных тестов, 5 браузерных сценариев, сборка TypeScript/Vite и Docker. События сохраняются после перезапуска контейнера.</p></div>
+    <div class="card"><h3>Следующая проверка</h3><p class="small">Живая доставка и доступность MAX. Диагностика API завершилась тайм-аутом; успешный локальный тест не означает отправленное пользователю сообщение.</p></div>
+  </div>
+  <div class="footer"><span>Результат команды фиксируется до отправки ответа</span><span>07 / 10</span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Данные и границы MVP</div>
+  <h2>Пользователь подтверждает дату</h2>
+  <div class="grid">
+    <div class="card"><h3>Храним необходимое для сценария</h3><p class="small">MAX ID и имя, параметры события, дату рождения для расчёта паспорта, название файла, заметку, настройки и историю доставок.</p><p class="small spaced">Оригиналы документов и полный распознанный текст не отправляются на сервер. Фото/PDF обрабатываются в браузере.</p></div>
+    <div class="card"><h3>Ограничения обозначены явно</h3><p class="small">Нет интеграций с ЕСИА, ЕГИСЗ и статусами заявлений. Демо синтетическое. OCR может ошибаться. Медицинский интервал задаётся по рекомендации врача; лечение не назначается.</p><p class="small spaced">Нужны согласия, правила хранения, защищённый хостинг и резервные копии перед пилотом с реальными данными.</p></div>
+  </div>
+  <p class="small muted spaced">Срок — расчёт по правилу или введённая дата. Рекомендация — следующий шаг. Официальное решение принимает ведомство. SQLite не шифруется самим приложением.</p>
+  <div class="footer"><span>Источники и дата проверки доступны в календаре</span><span>08 / 10</span></div>
+</section>
+<section class="slide roadmap">
+  <div class="eyebrow">Пилот и масштабирование</div>
+  <h2>Сначала подтвердить пользу,<br>затем расширять контекст</h2>
+  <div class="card">
+    <div class="row"><b>Недели 1–2</b><span>5–7 интервью → 20 сценарных тестов на синтетических данных. Проверить спрос и понятность пути.</span></div>
+    <div class="row"><b>Недели 3–6</b><span>Ограниченный пилот после подготовки оснований обработки данных, мониторинга и поддержки.</span></div>
+    <div class="row"><b>Новый регион</b><span>Сохранить MAX-профиль и механизм напоминаний. Адаптировать ссылки МФЦ, местные условия, пояснения и часовой пояс.</span></div>
+    <div class="row"><b>Рост нагрузки</b><span>Выделить worker, перейти на PostgreSQL и общую очередь, контролировать задержки и лимиты MAX.</span></div>
+  </div>
+  <p class="small muted spaced">Возможные партнёры: студенческие сообщества, МФЦ. Договорённости пока отсутствуют. Правила проверяет ответственный редактор перед релизом и ежемесячно.</p>
+  <div class="footer"><span>Ядро одинаковое; источники и условия региональные</span><span>09 / 10</span></div>
+</section>
+<section class="slide">
+  <div class="eyebrow">Источники и готовность к сдаче</div>
+  <h2>Проверяемый прототип.<br>Прозрачные ограничения.</h2>
+  <div class="grid">
+    <div class="card small"><h3>Основания и документация</h3><p><a href="https://dev.max.ru/docs-api/methods/POST/messages">MAX: отправка сообщений</a></p><p><a href="https://www.mfc-nso.ru/services/detail/140589">МФЦ НСО: паспорт РФ</a></p><p><a href="https://www.consultant.ru/document/cons_doc_LAW_466454/6125ca6a5baabbd3bbff7302f2c6e114b94061fa/">Положение о паспорте, пункты 24 и 27</a></p><p><a href="https://www.nalog.gov.ru/nu/">ФНС: уведомления 2026 года</a></p><p><a href="https://39.rospotrebnadzor.ru/node/19583">Роспотребнадзор: обследования</a></p><p class="muted">Требования: предоставленный PDF «Забота о людях», стр. 6–19. Проверка источников: 25.09.2026.</p></div>
+    <div class="card small"><h3>До финальной отправки</h3><p>Подтвердить ссылку на бота и доступность HTTPS. Пройти сценарий в обоих клиентах MAX и получить плановое сообщение.</p><p>Заполнить команду и закрытые параметры доступа для организаторов.</p><p>Указать финальный commit hash материалов. Сдаваемую версию после дедлайна не изменять.</p><p class="muted">Подробный отчёт: docs/requirements-review.md. Проверка: docs/verification.md.</p></div>
+  </div>
+  <div class="footer"><span>Вовремя · для жизни без лишних забот</span><span>10 / 10</span></div>
+</section>
+</body>
+</html>

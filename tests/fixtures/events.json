@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "description": "Вымышленные даты для технической проверки. Не персональные данные и не реальные обязательства.",
+  "events": [
+    { "templateId": "passport", "title": "Тест: замена паспорта", "category": "documents", "baseDate": "2006-10-20", "age": 20, "reminders": [30, 7, 1, 0], "expectedDueDate": "2027-01-18" },
+    { "templateId": "fluorography", "title": "Тест: обследование", "category": "health", "baseDate": "2024-02-29", "intervalMonths": 12, "reminders": [7, 1, 0], "expectedDueDate": "2025-02-28" },
+    { "templateId": "tax", "title": "Тест: налоговое уведомление", "category": "payments", "baseDate": "2026-12-01", "reminders": [7, 1, 0], "expectedDueDate": "2026-12-01" }
+  ]
+}
