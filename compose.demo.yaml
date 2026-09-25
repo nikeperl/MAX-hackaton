@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    environment:
+      NODE_ENV: development
+      DEMO_MODE: "true"
+      PORT: "3001"
+      DATABASE_PATH: /app/data/demo.sqlite
+    ports:
+      - "127.0.0.1:3002:3001"
+    volumes:
+      - demo-data:/app/data
+volumes:
+  demo-data:

@@ -9,6 +9,7 @@
     "start": "tsx server/index.ts",
     "test": "tsx --test tests/*.test.ts",
     "bot:subscribe": "tsx server/subscribe.ts",
+    "bot:check": "tsx server/check.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

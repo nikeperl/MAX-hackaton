@@ -221,6 +221,30 @@ export default function App() {
     const t = setTimeout(() => setToast(""), 4500);
     return () => clearTimeout(t);
   }, [toast]);
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      void Promise.all([api.me(), api.events()])
+        .then(([freshUser, freshEvents]) => {
+          if (active) {
+            setUser(freshUser);
+            setEvents(freshEvents);
+          }
+        })
+        .catch(() => {
+          /* Keep the current view when offline; explicit actions report errors. */
+        });
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [user?.id]);
   const notify = (s: string) => setToast(s);
   async function action(fn: () => Promise<void>) {
     setBusy(true);
@@ -512,6 +536,21 @@ export default function App() {
                       <span className="art-star star-two">✦</span>
                     </div>
                   </section>
+                  <aside className="bot-access">
+                    <Bell size={22} />
+                    <div>
+                      <strong>Напомним сообщением в MAX</strong>
+                      <p>
+                        Создавайте события в чате командой /add, смотрите сроки
+                        через /next. Включите уведомления: /resume.
+                      </p>
+                    </div>
+                    {config.botUrl && (
+                      <a href={config.botUrl} target="_blank" rel="noreferrer">
+                        Перейти в чат ↗
+                      </a>
+                    )}
+                  </aside>
                   <section className="stats-grid">
                     <button
                       className="stat-card"
@@ -1347,6 +1386,7 @@ function EventDetails({ event, today }: { event: Deadline; today: string }) {
       {event.templateId === "passport" && (
         <p className="muted">Дополнительно — в день 20-летия или 45-летия.</p>
       )}
+      {"scope" in t && <p className="muted">{t.scope}</p>}
       <div className="source-links">
         {t.link && (
           <a href={t.link} target="_blank" rel="noreferrer">
@@ -1356,7 +1396,7 @@ function EventDetails({ event, today }: { event: Deadline; today: string }) {
         )}
         {"source" in t && (
           <a href={t.source} target="_blank" rel="noreferrer">
-            Источник правила
+            Источник правила · проверен {formatDate(t.sourceReviewedOn)}
             <ExternalLink size={14} />
           </a>
         )}
@@ -1814,6 +1854,17 @@ function Notifications({
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [history, setHistory] = useState<Delivery[]>([]);
+  // Refresh from chat changes only while this form has no unsaved edits.
+  const previousSettings = useRef(user.settings);
+  useEffect(() => {
+    const previous = previousSettings.current;
+    setSettings((current) =>
+      JSON.stringify(current) === JSON.stringify(previous)
+        ? user.settings
+        : current,
+    );
+    previousSettings.current = user.settings;
+  }, [user.settings]);
   useEffect(() => {
     api
       .deliveries()
@@ -1971,7 +2022,7 @@ function Notifications({
             </strong>
             <p>
               {settings.privateMessages
-                ? "В вашем календаре приближается срок события. Откройте мини-приложение, чтобы посмотреть дату и рекомендации."
+                ? "В вашем календаре приближается срок события. Команда /show с кодом события покажет дату и рекомендации прямо в чате."
                 : "До срока подачи документов осталось 7 дней. Подготовьте паспорт и фотографии, проверьте список документов на Госуслугах."}
             </p>
             <small>

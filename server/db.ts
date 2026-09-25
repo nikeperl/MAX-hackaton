@@ -26,6 +26,12 @@ export function openDatabase(path: string) {
  CREATE TABLE IF NOT EXISTS deliveries (id TEXT PRIMARY KEY,event_id TEXT REFERENCES events(id) ON DELETE CASCADE,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,title TEXT NOT NULL,status TEXT NOT NULL,sent_at TEXT,attempts INTEGER DEFAULT 0,next_attempt INTEGER DEFAULT 0);
  CREATE TABLE IF NOT EXISTS inbox (id TEXT PRIMARY KEY,payload TEXT NOT NULL,status TEXT DEFAULT 'pending',attempts INTEGER DEFAULT 0,next_attempt INTEGER DEFAULT 0);
  CREATE INDEX IF NOT EXISTS events_user ON events(user_id);`);
+  // Persist a command's result with its mutations before attempting network delivery.
+  const columns = db.prepare("PRAGMA table_info(inbox)").all() as {
+    name: string;
+  }[];
+  if (!columns.some((column) => column.name === "response"))
+    db.exec("ALTER TABLE inbox ADD COLUMN response TEXT");
   return db;
 }
 export type DB = ReturnType<typeof openDatabase>;

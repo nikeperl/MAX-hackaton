@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { postMaxJson } from "./max-api.js";
+import { botCommands } from "./commands.js";
 const { MAX_BOT_TOKEN, MAX_WEBHOOK_SECRET, APP_URL } = process.env;
 if (!MAX_BOT_TOKEN || !MAX_WEBHOOK_SECRET || !APP_URL?.startsWith("https://"))
   throw new Error("Нужны MAX_BOT_TOKEN, MAX_WEBHOOK_SECRET и HTTPS APP_URL");
@@ -9,23 +11,21 @@ if (!/^[a-zA-Z0-9_-]{16,256}$/.test(MAX_WEBHOOK_SECRET))
 const url = new URL("/api/max/webhook", APP_URL);
 if (url.port && url.port !== "443")
   throw new Error("MAX требует HTTPS порт 443");
-const response = await fetch(
+const body = await postMaxJson<{ success: boolean }>(
   `${process.env.MAX_API_URL || "https://platform-api2.max.ru"}/subscriptions`,
+  MAX_BOT_TOKEN,
   {
-    method: "POST",
-    headers: {
-      Authorization: MAX_BOT_TOKEN,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      url: url.toString(),
-      secret: MAX_WEBHOOK_SECRET,
-      update_types: ["bot_started", "bot_stopped", "message_created"],
-    }),
-    signal: AbortSignal.timeout(15000),
+    url: url.toString(),
+    secret: MAX_WEBHOOK_SECRET,
+    update_types: ["bot_started", "bot_stopped", "message_created"],
   },
 );
-if (!response.ok) throw new Error(`MAX HTTP ${response.status}`);
-const body = (await response.json()) as { success: boolean };
 if (!body.success) throw new Error("MAX отклонил подписку");
 console.log("Webhook подключён:", url.toString());
+await postMaxJson(
+  `${process.env.MAX_API_URL || "https://platform-api2.max.ru"}/me`,
+  MAX_BOT_TOKEN,
+  { commands: botCommands },
+  "PATCH",
+);
+console.log("Меню команд бота обновлено.");

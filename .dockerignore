@@ -8,3 +8,6 @@ deploy/ip/certs
 docs/*.png
 test-results
 playwright-report
+.cache
+coverage
+docs/*.pdf

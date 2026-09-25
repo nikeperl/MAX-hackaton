@@ -13,50 +13,47 @@ import {
   type Deadline,
   type User,
 } from "../shared/domain.js";
+import { postMaxJson } from "./max-api.js";
+import { commandReply } from "./commands.js";
 export type SendMessage = (userId: string, text: string) => Promise<void>;
 export function maxSender(
   token: string,
   username: string,
   apiUrl = "https://platform-api2.max.ru",
+  transport = postMaxJson,
 ): SendMessage {
   // One queue per process keeps both global and per-dialog limits below MAX limits.
   let queue = Promise.resolve();
   return (userId, text) => {
     const job = queue.then(async () => {
-      const response = await fetch(
+      const body = await transport<{ message?: unknown }>(
         `${apiUrl}/messages?user_id=${encodeURIComponent(userId)}`,
+        token,
         {
-          method: "POST",
-          headers: { Authorization: token, "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(15000),
-          body: JSON.stringify({
-            text: text.slice(0, 4000),
-            notify: true,
-            ...(username
-              ? {
-                  attachments: [
-                    {
-                      type: "inline_keyboard",
-                      payload: {
-                        buttons: [
-                          [
-                            {
-                              type: "link",
-                              text: "Открыть календарь",
-                              url: `https://max.ru/${username}?startapp`,
-                            },
-                          ],
+          text: text.slice(0, 4000),
+          notify: true,
+          ...(username
+            ? {
+                attachments: [
+                  {
+                    type: "inline_keyboard",
+                    payload: {
+                      buttons: [
+                        [
+                          {
+                            type: "link",
+                            text: "Открыть календарь",
+                            url: `https://max.ru/${username}?startapp`,
+                          },
                         ],
-                      },
+                      ],
                     },
-                  ],
-                }
-              : {}),
-          }),
+                  },
+                ],
+              }
+            : {}),
         },
       );
-      if (!response.ok) throw new Error(`MAX HTTP ${response.status}`);
-      const body = (await response.json()) as any;
       if (!body.message) throw new Error("MAX не подтвердил отправку");
     });
     queue = job
@@ -72,9 +69,9 @@ export function reminderText(
   milestone = false,
 ) {
   if (user.settings.privateMessages)
-    return `Вовремя: ${milestone ? "наступила важная дата" : "приближается срок события"} в вашем календаре. Откройте мини-приложение, чтобы посмотреть дату и рекомендации.`;
+    return `Вовремя: ${milestone ? "наступила важная дата" : "пришло время проверить срок события"} в вашем календаре. Посмотреть дату и рекомендации в чате: /show ${event.id.slice(0, 8)}. Или откройте мини-приложение.`;
   const template = templates.find((t) => t.id === event.templateId)!;
-  return `Вовремя · ${event.title}\n${milestone ? "Наступила дата замены паспорта.\n" : ""}${event.dueDate < today ? "Срок прошёл" : event.dueDate === today ? "Срок сегодня" : "Срок"}: ${formatDate(event.dueDate)}\n\n${template.steps.join("\n")}\n${event.notes ? `\nВаша заметка: ${event.notes}\n` : ""}${"source" in template ? `\nИсточник: ${template.source}` : ""}`;
+  return `Вовремя · ${event.title}\n${milestone ? "Наступила дата замены паспорта.\n" : ""}${event.dueDate < today ? "Срок прошёл" : event.dueDate === today ? "Срок сегодня" : "Срок"}: ${formatDate(event.dueDate)}\n\n${template.steps.join("\n")}\n${event.notes ? `\nВаша заметка: ${event.notes}\n` : ""}${"source" in template ? `\nИсточник: ${template.source}` : ""}\n\nЗавершить: /done ${event.id.slice(0, 8)}`;
 }
 export function dueReminders(event: Deadline, user: User, now: Date) {
   if (
@@ -140,8 +137,12 @@ export async function processReminders(
         );
         if (
           !freshUser?.settings.enabled ||
+          !freshUser.botStarted ||
+          freshUser.demo ||
           !freshEvent ||
-          freshEvent.completed
+          !dueReminders(freshEvent, freshUser, now).some(
+            (p) => p.id === point.id,
+          )
         ) {
           db.prepare("DELETE FROM deliveries WHERE id=?").run(point.id);
           continue;
@@ -152,7 +153,7 @@ export async function processReminders(
             reminderText(
               freshEvent,
               freshUser,
-              todayIn(user.settings.timezone, now),
+              todayIn(freshUser.settings.timezone, now),
               point.milestone,
             ),
           );
@@ -173,7 +174,7 @@ export async function processInbox(
 ) {
   const rows = db
     .prepare(
-      "SELECT * FROM inbox WHERE status IN ('pending','failed','sending') AND next_attempt<=? AND attempts<10 LIMIT 20",
+      "SELECT * FROM inbox WHERE status IN ('pending','failed','sending') AND next_attempt<=? AND attempts<10 ORDER BY rowid LIMIT 20",
     )
     .all(now) as any[];
   for (const row of rows) {
@@ -184,6 +185,16 @@ export async function processInbox(
       .run(now + 120000, row.id, now);
     if (!claim.changes) continue;
     try {
+      // A retry sends the saved result without repeating creation or other mutations.
+      if (row.response) {
+        const reply = JSON.parse(row.response);
+        if (getUser(db, reply.userId)?.botStarted)
+          await send(reply.userId, reply.text);
+        db.prepare(
+          "UPDATE inbox SET status='done',payload='{}',response=NULL WHERE id=?",
+        ).run(row.id);
+        continue;
+      }
       const update = JSON.parse(row.payload);
       if (update.update_type === "bot_stopped") {
         const id = String(update.user?.user_id || "");
@@ -226,31 +237,22 @@ export async function processInbox(
       );
       db.prepare("UPDATE users SET bot_started=1 WHERE id=?").run(id);
       const user = getUser(db, id)!;
-      const text = String(update.message?.body?.text || "/start")
-        .trim()
-        .toLowerCase();
-      let answer =
-        "Я помогу не пропустить важные сроки. Откройте календарь, добавьте событие или распознайте документ.\n\n/next — ближайшие события\n/pause — выключить напоминания\n/resume — включить напоминания\n/help — помощь\n\nВ настройках календаря выберите время и включите напоминания. Фото и PDF загружаются в мини-приложении.";
-      if (text === "/pause") {
-        saveSettings(db, id, { ...user.settings, enabled: false });
-        answer = "Напоминания выключены. Включить снова: /resume.";
-      } else if (text === "/resume") {
-        saveSettings(db, id, { ...user.settings, enabled: true });
-        answer = `Напоминания включены на ${user.settings.hour}:00 (${user.settings.timezone}). Детали сообщений можно настроить в календаре.`;
-      } else if (text === "/next") {
-        const events = listEvents(db, id)
-          .filter((e) => !e.completed)
-          .slice(0, 5);
-        answer = events.length
-          ? events
-              .map((e) => `${formatDate(e.dueDate)} — ${e.title}`)
-              .join("\n")
-          : "Пока нет событий. Добавьте первое в календаре.";
-      }
+      const text =
+        update.update_type === "bot_started"
+          ? "/start"
+          : String(update.message?.body?.text || "");
+      const answer = db.transaction(() => {
+        const result = commandReply(db, user, text);
+        db.prepare("UPDATE inbox SET response=? WHERE id=?").run(
+          JSON.stringify({ userId: id, text: result }),
+          row.id,
+        );
+        return result;
+      })();
       await send(id, answer);
-      db.prepare("UPDATE inbox SET status='done',payload='{}' WHERE id=?").run(
-        row.id,
-      );
+      db.prepare(
+        "UPDATE inbox SET status='done',payload='{}',response=NULL WHERE id=?",
+      ).run(row.id);
     } catch {
       db.prepare(
         "UPDATE inbox SET status='failed',next_attempt=? WHERE id=?",

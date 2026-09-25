@@ -13,6 +13,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/server ./server
 COPY --from=build /app/shared ./shared
 COPY --from=build /app/package.json ./package.json
+COPY deploy/max/russian_trusted_root_ca_pem.crt /app/deploy/max/russian_trusted_root_ca_pem.crt
 RUN mkdir -p /app/data && chown -R node:node /app/data
 USER node
 EXPOSE 3001
