@@ -1,6 +1,9 @@
+name: vovremya-demo
+
 services:
   app:
     build: .
+    restart: unless-stopped
     environment:
       NODE_ENV: development
       DEMO_MODE: "true"
