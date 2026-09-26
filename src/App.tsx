@@ -293,7 +293,7 @@ export default function App() {
     return (
       <div className="loading-screen">
         <span className="brand-mark">
-          <CheckCheck />
+          <img src="/logo.png" alt="" />
         </span>
         <h2>Вовремя</h2>
         <LoaderCircle className="spin" />
@@ -323,7 +323,7 @@ export default function App() {
           }}
         >
           <span className="brand-mark">
-            <CheckCheck size={28} />
+            <img src="/logo.png" alt="" />
           </span>
           <span>
             вовремя<span className="brand-dot">.</span>

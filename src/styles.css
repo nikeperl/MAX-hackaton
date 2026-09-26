@@ -123,15 +123,17 @@ svg {
   justify-content: center;
   width: 43px;
   height: 43px;
-  background: var(--brand-gradient);
-  color: #f5fbff;
+  flex-shrink: 0;
+  overflow: hidden;
   border-radius: 16px;
-  transform: none;
   box-shadow: 0 6px 18px rgba(7, 86, 245, 0.24);
 }
-.brand-mark svg {
-  transform: none;
-  filter: drop-shadow(0 2px 2px rgba(7, 50, 150, 0.22));
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 .brand-dot {
   color: var(--brand);
