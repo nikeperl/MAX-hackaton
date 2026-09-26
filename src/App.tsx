@@ -348,7 +348,9 @@ export default function App() {
         </nav>
         <div className="sidebar-bottom">
           <div className="max-mini">
-            <span className="max-logo">м</span>
+            <span className="max-logo">
+              <img src="/Max_logo.svg" alt="" />
+            </span>
             <strong>Важное — в MAX</strong>
             <p>
               Напомним о сроках прямо
@@ -1888,7 +1890,9 @@ function Notifications({
       <form className="panel settings-panel" onSubmit={submit}>
         <div className="section-heading">
           <h2>Напоминания в MAX</h2>
-          <span className="max-logo">м</span>
+          <span className="max-logo">
+            <img src="/Max_logo.svg" alt="" />
+          </span>
         </div>
         <div className="settings-line">
           <div>
@@ -2007,7 +2011,9 @@ function Notifications({
         <div className="message-preview">
           <span className="eyebrow">ПРИМЕР УВЕДОМЛЕНИЯ</span>
           <div className="message-app">
-            <span className="max-logo">м</span>
+            <span className="max-logo">
+              <img src="/Max_logo.svg" alt="" />
+            </span>
             <span>
               <strong>Вовремя</strong>
               <small>бот · MAX</small>

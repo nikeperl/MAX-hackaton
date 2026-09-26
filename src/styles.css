@@ -203,18 +203,17 @@ svg {
   justify-content: center;
   background: var(--brand-gradient);
   border-radius: 11px 11px 11px 4px;
-  color: white;
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -6px;
-  padding-right: 5px;
-  font-style: italic;
+  flex-shrink: 0;
+}
+.max-logo img {
+  display: block;
+  width: 75%;
+  height: 75%;
+  object-fit: contain;
 }
 .max-mini > .max-logo {
   width: 27px;
   height: 27px;
-  font-size: 24px;
   vertical-align: middle;
   margin-right: 7px;
 }
