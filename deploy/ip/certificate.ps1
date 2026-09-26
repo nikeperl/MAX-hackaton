@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
     [string]$PublicIp,
 
@@ -43,7 +43,10 @@ try {
         if ($Renew) {
             & docker run --rm --publish '443:443' --volume "${acmeDir}:/acme.sh" `
                 --volume "${certDir}:/certs" $acmeImage --renew -d $PublicIp --ecc
-            Assert-DockerSuccess
+            # acme.sh returns 2 when the certificate is not due for renewal.
+            if ($LASTEXITCODE -ne 2) {
+                Assert-DockerSuccess
+            }
         } else {
             & docker run --rm --publish '443:443' --volume "${acmeDir}:/acme.sh" `
                 $acmeImage --issue --alpn --server letsencrypt `
