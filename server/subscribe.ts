@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { postMaxJson } from "./max-api.js";
 import { botCommands } from "./commands.js";
+import { maxUpdateTypes } from "./max-events.js";
 const { MAX_BOT_TOKEN, MAX_WEBHOOK_SECRET, APP_URL } = process.env;
 if (!MAX_BOT_TOKEN || !MAX_WEBHOOK_SECRET || !APP_URL?.startsWith("https://"))
   throw new Error("Нужны MAX_BOT_TOKEN, MAX_WEBHOOK_SECRET и HTTPS APP_URL");
@@ -17,13 +18,13 @@ const body = await postMaxJson<{ success: boolean }>(
   {
     url: url.toString(),
     secret: MAX_WEBHOOK_SECRET,
-    update_types: ["bot_started", "bot_stopped", "message_created"],
+    update_types: maxUpdateTypes,
   },
 );
 if (!body.success) throw new Error("MAX отклонил подписку");
 console.log("Webhook подключён:", url.toString());
 await postMaxJson(
-  `${process.env.MAX_API_URL || "https://platform-api2.max.ru"}/me`,
+  `${process.env.MAX_API_URL || "https://platform-api2.max.ru"}/me/commands`,
   MAX_BOT_TOKEN,
   { commands: botCommands },
   "PATCH",

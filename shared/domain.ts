@@ -1,11 +1,6 @@
 import { z } from "zod";
-export type Category = "documents" | "health" | "payments" | "other";
-export const categories: Record<Category, string> = {
-  documents: "Документы",
-  health: "Здоровье",
-  payments: "Платежи",
-  other: "Личное",
-};
+import { additionalTemplates, categories, type Category } from "./services.js";
+export { categories, type Category };
 export function isDate(value: string) {
   return (
     /^\d{4}-\d{2}-\d{2}$/.test(value) &&
@@ -123,7 +118,7 @@ export const templates = [
   {
     id: "insurance",
     title: "Полис ОСАГО",
-    category: "documents",
+    category: "transport",
     description: "Напомним продлить полис",
     dateLabel: "Дата окончания полиса",
     rule: "Дата окончания берётся из действующего полиса.",
@@ -133,6 +128,7 @@ export const templates = [
     ],
     link: "",
   },
+  ...additionalTemplates,
   {
     id: "custom",
     title: "Своё событие",
@@ -145,27 +141,40 @@ export const templates = [
   },
 ] as const;
 export type TemplateId = (typeof templates)[number]["id"];
-export const eventInputSchema = z.object({
-  templateId: z.enum([
-    "passport",
-    "fluorography",
-    "tax",
-    "international",
-    "insurance",
-    "custom",
-  ]),
-  title: z.string().trim().min(1).max(120),
-  category: z.enum(["documents", "health", "payments", "other"]),
-  baseDate: dateSchema,
-  age: z.union([z.literal(20), z.literal(45)]).optional(),
-  intervalMonths: z.number().int().min(1).max(120).optional(),
-  reminders: z
-    .array(z.number().int().min(0).max(365))
-    .max(8)
-    .default([30, 7, 1, 0]),
-  notes: z.string().max(2000).default(""),
-  documentName: z.string().max(160).default(""),
-});
+export const templateById = Object.fromEntries(
+  templates.map((t) => [t.id, t]),
+) as Record<TemplateId, (typeof templates)[number]>;
+export function nextSteps(event: Pick<EventInput, "templateId" | "notes">) {
+  const template = templateById[event.templateId];
+  return [
+    ...template.steps,
+    ...(event.notes ? [`Ваша заметка: ${event.notes}`] : []),
+  ];
+}
+export const eventInputSchema = z
+  .object({
+    templateId: z.enum(
+      templates.map((t) => t.id) as [TemplateId, ...TemplateId[]],
+    ),
+    title: z.string().trim().min(1).max(120),
+    category: z.enum(Object.keys(categories) as [Category, ...Category[]]),
+    baseDate: dateSchema,
+    age: z.union([z.literal(20), z.literal(45)]).optional(),
+    intervalMonths: z.number().int().min(1).max(120).optional(),
+    reminders: z
+      .array(z.number().int().min(0).max(365))
+      .max(8)
+      .default([30, 7, 1, 0]),
+    notes: z.string().max(2000).default(""),
+    documentName: z.string().max(160).default(""),
+  })
+  .transform((input) => ({
+    ...input,
+    category:
+      input.templateId === "custom"
+        ? input.category
+        : templateById[input.templateId].category,
+  }));
 export type EventInput = z.infer<typeof eventInputSchema>;
 export type Deadline = EventInput & {
   id: string;

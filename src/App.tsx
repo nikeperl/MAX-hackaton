@@ -37,12 +37,20 @@ import {
   MessageCircle,
   LogOut,
   ChevronDown,
+  Car,
+  House,
+  Users,
+  GraduationCap,
+  BriefcaseBusiness,
+  Globe,
+  HandHeart,
 } from "lucide-react";
 import { api } from "./api";
 import { recognize } from "./recognize";
 import {
   categories,
   templates,
+  nextSteps,
   calculateDeadline,
   formatDate,
   todayIn,
@@ -62,6 +70,13 @@ const icons = {
   documents: FileText,
   health: Heart,
   payments: Wallet,
+  transport: Car,
+  home: House,
+  social: HandHeart,
+  family: Users,
+  education: GraduationCap,
+  work: BriefcaseBusiness,
+  migration: Globe,
   other: CalendarDays,
 };
 const nav = [
@@ -1165,15 +1180,15 @@ export default function App() {
                 : "Отметить выполненным"}
             </button>
           </div>
-          {detail.templateId === "fluorography" && (
+          {detail.completed && (
             <button
               className="text-button repeat-button"
               onClick={() => {
                 setDetail(null);
-                openEditor("fluorography");
+                openEditor(detail.templateId);
               }}
             >
-              Добавить следующее обследование <ArrowRight size={15} />
+              Добавить следующую дату <ArrowRight size={15} />
             </button>
           )}
         </Modal>
@@ -1366,7 +1381,7 @@ function EventDetails({ event, today }: { event: Deadline; today: string }) {
       </div>
       <h3 className="subheading">Что нужно сделать</h3>
       <ol className="steps">
-        {t.steps.map((s) => (
+        {nextSteps({ ...event, notes: "" }).map((s) => (
           <li key={s}>{s}</li>
         ))}
       </ol>
@@ -1392,13 +1407,16 @@ function EventDetails({ event, today }: { event: Deadline; today: string }) {
       <div className="source-links">
         {t.link && (
           <a href={t.link} target="_blank" rel="noreferrer">
-            {event.templateId === "tax" ? "Открыть ФНС" : "Открыть Госуслуги"}
+            Перейти к услуге или ведомству
             <ExternalLink size={14} />
           </a>
         )}
         {"source" in t && (
           <a href={t.source} target="_blank" rel="noreferrer">
-            Источник правила · проверен {formatDate(t.sourceReviewedOn)}
+            Источник правила
+            {"sourceReviewedOn" in t
+              ? ` · проверен ${formatDate(t.sourceReviewedOn)}`
+              : ""}
             <ExternalLink size={14} />
           </a>
         )}
@@ -1446,6 +1464,15 @@ function EventEditor({
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false);
   const t = templates.find((v) => v.id === selected);
+  const [sphere, setSphere] = useState<Category | "all">("all");
+  const [templateSearch, setTemplateSearch] = useState("");
+  const matchingTemplates = templates.filter(
+    (item) =>
+      (sphere === "all" || item.category === sphere) &&
+      `${item.title} ${item.description} ${categories[item.category]}`
+        .toLocaleLowerCase("ru")
+        .includes(templateSearch.trim().toLocaleLowerCase("ru")),
+  );
   function choose(id: TemplateId) {
     const template = templates.find((v) => v.id === id)!;
     setSelected(id);
@@ -1513,20 +1540,55 @@ function EventEditor({
           <p className="modal-description">
             Выберите событие. Мы поможем рассчитать срок и подготовиться.
           </p>
+          <div className="catalog-controls">
+            <label className="field">
+              Поиск услуги
+              <input
+                type="search"
+                value={templateSearch}
+                onChange={(e) => setTemplateSearch(e.target.value)}
+                placeholder="Пособие, счётчик, паспорт…"
+              />
+            </label>
+            <label className="field">
+              Сфера
+              <select
+                aria-label="Сфера"
+                value={sphere}
+                onChange={(e) => setSphere(e.target.value as Category | "all")}
+              >
+                <option value="all">Все сферы</option>
+                {Object.entries(categories).map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <p className="muted" role="status">
+            Найдено услуг: {matchingTemplates.length}
+          </p>
           <div className="template-grid">
-            {templates.map((t) => (
+            {matchingTemplates.map((t) => (
               <button
                 key={t.id}
                 className="template-card"
                 onClick={() => choose(t.id)}
               >
                 <CategoryIcon category={t.category} />
+                <small>{categories[t.category]}</small>
                 <h3>{t.title}</h3>
                 <p>{t.description}</p>
                 <ArrowUpRight size={18} />
               </button>
             ))}
           </div>
+          {!matchingTemplates.length && (
+            <p className="empty-catalog">
+              Ничего не найдено. Измените поиск или выберите другую сферу.
+            </p>
+          )}
           <div className="privacy-note">
             <ShieldCheck size={17} />
             <p>Только нужные даты. Номера документов не требуются.</p>
@@ -1621,6 +1683,7 @@ function EventEditor({
             <Info size={17} />
             <p>{t?.rule}</p>
           </div>
+          {t && "scope" in t && <p className="muted">{t.scope}</p>}
           {calculated && (
             <div className="calculated">
               <Sparkles size={18} />

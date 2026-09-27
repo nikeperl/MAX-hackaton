@@ -2,6 +2,7 @@ import "dotenv/config";
 import { openDatabase } from "./db.js";
 import { createApp } from "./app.js";
 import { maxSender, processInbox, processReminders } from "./bot.js";
+import { postMaxJson } from "./max-api.js";
 const production = process.env.NODE_ENV === "production";
 const demo =
   process.env.DEMO_MODE === "true" ||
@@ -18,7 +19,21 @@ if (!demo && (!token || !username || !webhookSecret))
     "Заполните MAX_BOT_TOKEN, MAX_BOT_USERNAME, MAX_WEBHOOK_SECRET в .env",
   );
 const db = openDatabase(process.env.DATABASE_PATH || "./data/vovremya.sqlite");
-const app = createApp(db, { production, demo, token, username, webhookSecret });
+const app = createApp(db, {
+  production,
+  demo,
+  token,
+  username,
+  webhookSecret,
+  onUpdate: () => setImmediate(() => void tick()),
+  onCallback: (id) => {
+    void postMaxJson(
+      `${process.env.MAX_API_URL || "https://platform-api2.max.ru"}/answers?callback_id=${encodeURIComponent(id)}`,
+      token,
+      { notification: "Принято" },
+    ).catch(() => console.error("Не удалось подтвердить нажатие кнопки MAX."));
+  },
+});
 const server = app.listen(Number(process.env.PORT || 3001), () =>
   console.log(
     `Вовремя: http://localhost:${process.env.PORT || 3001} · ${demo ? "локальное демо" : "MAX"}`,

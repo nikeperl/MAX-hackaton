@@ -11,6 +11,7 @@ import {
   isDate,
   settingsSchema,
   templates,
+  nextSteps,
   todayIn,
   type EventInput,
   type User,
@@ -65,7 +66,7 @@ function parseDate(raw: string) {
 }
 
 function status(user: User) {
-  return `Напоминания ${user.settings.enabled ? "включены" : "выключены"}.\nВремя: ${String(user.settings.hour).padStart(2, "0")}:00, ${user.settings.timezone}.\nДетали в напоминаниях ${user.settings.privateMessages ? "скрыты" : "видны"}.\nСообщения приходят от этого бота, даже когда календарь закрыт.\n/resume — включить; /pause — выключить; /time — изменить время.`;
+  return `Напоминания ${user.settings.enabled ? "включены" : "выключены"}.\nВремя: ${String(user.settings.hour).padStart(2, "0")}:00, ${user.settings.timezone}.\nДетали в напоминаниях ${user.settings.privateMessages ? "скрыты" : "видны"}.\nСообщения приходят от этого бота, даже когда календарь закрыт.`;
 }
 
 // Synchronous: the inbox worker wraps this function and its saved reply in one transaction.
@@ -189,7 +190,13 @@ export function commandReply(db: DB, user: User, raw: string) {
       return `Готово: ${event.title}. Напоминания об этом событии больше не придут. Остальные события: /next.`;
     }
     const template = templates.find((item) => item.id === event.templateId)!;
-    return `${event.title}\nСрок: ${formatDate(event.dueDate)}${event.completed ? " · выполнено" : ""}\n\nОснование расчёта: ${template.rule}\n\nЧто сделать:\n${template.steps.map((step, i) => `${i + 1}. ${step}`).join("\n")}\n${event.notes ? `\nВаша заметка: ${event.notes.slice(0, 1000)}\n` : ""}${"source" in template ? `\nИсточник: ${template.source}\n` : ""}${template.link ? `\nПерейти к услуге: ${template.link}` : ""}`;
+    return `${event.title}\nСрок: ${formatDate(event.dueDate)}${event.completed ? " · выполнено" : ""}\n\nОснование расчёта: ${template.rule}\n\nЧто сделать:\n${nextSteps(
+      { ...event, notes: event.notes.slice(0, 1000) },
+    )
+      .map((step, i) => `${i + 1}. ${step}`)
+      .join(
+        "\n",
+      )}${"scope" in template ? `\n\nУсловия: ${template.scope}` : ""}${"source" in template ? `\nИсточник: ${template.source}\n` : ""}${template.link ? `\nПерейти к услуге: ${template.link}` : ""}`;
   }
   return `Не удалось распознать команду. /help — примеры, /next — события.\nФото и PDF добавьте через «Добавить документ» в мини-приложении.`;
 }

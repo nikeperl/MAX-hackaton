@@ -10,6 +10,11 @@ secrets*.json
 *.p12
 *.pfx
 *.token
+*.p8
+*.keystore
+id_rsa
+id_ed25519
+backups/
 deploy/ip/acme/
 deploy/ip/certs/
 
@@ -18,9 +23,11 @@ data/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+*.sqlite-journal
 *.db
 *.db-shm
 *.db-wal
+*.db-journal
 
 # Зависимости, сборка и временные файлы
 node_modules/

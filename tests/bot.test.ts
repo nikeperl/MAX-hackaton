@@ -58,7 +58,7 @@ test("chat-only journey creates, configures, reminds, explains and completes sha
     return sent.at(-1)!.text;
   };
   try {
-    assert.match(await chat("/start"), /\/add/);
+    assert.match(await chat("/start"), /Добавить событие/);
     assert.match(
       await chat("/add 01.12.2026 Оплатить Налог"),
       /Добавлено: Оплатить Налог/,
@@ -94,19 +94,17 @@ test("chat-only journey creates, configures, reminds, explains and completes sha
 test("failed reply retries without creating duplicates or reverting later settings", async () => {
   const db = openDatabase(":memory:");
   const enqueue = (id: string, text: string) =>
-    db
-      .prepare("INSERT INTO inbox(id,payload) VALUES(?,?)")
-      .run(
-        id,
-        JSON.stringify({
-          update_type: "message_created",
-          message: {
-            sender: { user_id: 42 },
-            recipient: { chat_type: "dialog" },
-            body: { text },
-          },
-        }),
-      );
+    db.prepare("INSERT INTO inbox(id,payload) VALUES(?,?)").run(
+      id,
+      JSON.stringify({
+        update_type: "message_created",
+        message: {
+          sender: { user_id: 42 },
+          recipient: { chat_type: "dialog" },
+          body: { text },
+        },
+      }),
+    );
   try {
     enqueue("add", "/add 01.12.2026 Проверка");
     await processInbox(

@@ -11,6 +11,7 @@ import {
   type Settings,
   addDays,
   addMonths,
+  templateById,
   todayIn,
 } from "../shared/domain.js";
 export function openDatabase(path: string) {
@@ -25,6 +26,7 @@ export function openDatabase(path: string) {
  CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS deliveries (id TEXT PRIMARY KEY,event_id TEXT REFERENCES events(id) ON DELETE CASCADE,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,title TEXT NOT NULL,status TEXT NOT NULL,sent_at TEXT,attempts INTEGER DEFAULT 0,next_attempt INTEGER DEFAULT 0);
  CREATE TABLE IF NOT EXISTS inbox (id TEXT PRIMARY KEY,payload TEXT NOT NULL,status TEXT DEFAULT 'pending',attempts INTEGER DEFAULT 0,next_attempt INTEGER DEFAULT 0);
+ CREATE TABLE IF NOT EXISTS chat_state (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,data TEXT NOT NULL,updated_at INTEGER NOT NULL);
  CREATE INDEX IF NOT EXISTS events_user ON events(user_id);`);
   // Persist a command's result with its mutations before attempting network delivery.
   const columns = db.prepare("PRAGMA table_info(inbox)").all() as {
@@ -65,7 +67,16 @@ export function listEvents(db: DB, id: string): Deadline[] {
       data: string;
     }[]
   )
-    .map((r) => JSON.parse(r.data))
+    .map((r) => {
+      const event = JSON.parse(r.data) as Deadline;
+      return {
+        ...event,
+        category:
+          event.templateId === "custom"
+            ? event.category
+            : templateById[event.templateId].category,
+      };
+    })
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 }
 export function createEvent(db: DB, userId: string, input: EventInput) {

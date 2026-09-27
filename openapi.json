@@ -28,13 +28,8 @@
                   "type": "object",
                   "required": ["demo", "botUrl"],
                   "properties": {
-                    "demo": {
-                      "type": "boolean"
-                    },
-                    "botUrl": {
-                      "type": "string",
-                      "nullable": true
-                    }
+                    "demo": { "type": "boolean" },
+                    "botUrl": { "type": "string", "nullable": true }
                   }
                 }
               }
@@ -54,12 +49,7 @@
                 "schema": {
                   "type": "object",
                   "required": ["ok"],
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "enum": [true]
-                    }
-                  }
+                  "properties": { "ok": { "type": "boolean", "enum": [true] } }
                 }
               }
             }
@@ -77,10 +67,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "initData": {
-                    "type": "string",
-                    "maxLength": 20000
-                  }
+                  "initData": { "type": "string", "maxLength": 20000 }
                 }
               }
             }
@@ -95,12 +82,8 @@
                   "type": "object",
                   "required": ["token", "user"],
                   "properties": {
-                    "token": {
-                      "type": "string"
-                    },
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    }
+                    "token": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/User" }
                   }
                 }
               }
@@ -110,9 +93,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -120,9 +101,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -130,9 +109,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -141,19 +118,13 @@
     },
     "/me": {
       "get": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
           "200": {
             "description": "Успешно",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
+                "schema": { "$ref": "#/components/schemas/User" }
               }
             }
           },
@@ -161,9 +132,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -171,9 +140,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -181,9 +148,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -193,11 +158,7 @@
     },
     "/events": {
       "get": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
           "200": {
             "description": "Успешно",
@@ -205,9 +166,7 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Event"
-                  }
+                  "items": { "$ref": "#/components/schemas/Event" }
                 }
               }
             }
@@ -216,9 +175,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -226,9 +183,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -236,9 +191,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -246,19 +199,13 @@
         "summary": "События текущего пользователя по дате"
       },
       "post": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
           "201": {
             "description": "Успешно",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Event"
-                }
+                "schema": { "$ref": "#/components/schemas/Event" }
               }
             }
           },
@@ -266,9 +213,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -276,9 +221,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -286,9 +229,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -296,9 +237,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -308,9 +247,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EventInput"
-              }
+              "schema": { "$ref": "#/components/schemas/EventInput" }
             }
           }
         }
@@ -322,26 +259,17 @@
           "name": "id",
           "in": "path",
           "required": true,
-          "schema": {
-            "type": "string",
-            "format": "uuid"
-          }
+          "schema": { "type": "string", "format": "uuid" }
         }
       ],
       "put": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
           "200": {
             "description": "Успешно",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Event"
-                }
+                "schema": { "$ref": "#/components/schemas/Event" }
               }
             }
           },
@@ -349,9 +277,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -359,29 +285,19 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
           "404": {
             "description": "Событие не принадлежит пользователю или не найдено",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "content": { "text/plain": { "schema": { "type": "string" } } }
           },
           "429": {
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -389,9 +305,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -401,27 +315,19 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EventInput"
-              }
+              "schema": { "$ref": "#/components/schemas/EventInput" }
             }
           }
         }
       },
       "patch": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
           "200": {
             "description": "Успешно",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Event"
-                }
+                "schema": { "$ref": "#/components/schemas/Event" }
               }
             }
           },
@@ -429,9 +335,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -439,29 +343,19 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
           "404": {
             "description": "Не найдено",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "content": { "text/plain": { "schema": { "type": "string" } } }
           },
           "429": {
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -469,9 +363,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -484,53 +376,33 @@
               "schema": {
                 "type": "object",
                 "required": ["completed"],
-                "properties": {
-                  "completed": {
-                    "type": "boolean"
-                  }
-                }
+                "properties": { "completed": { "type": "boolean" } }
               }
             }
           }
         }
       },
       "delete": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
-          "204": {
-            "description": "Удалено"
-          },
+          "204": { "description": "Удалено" },
           "401": {
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
           "404": {
             "description": "Не найдено",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "content": { "text/plain": { "schema": { "type": "string" } } }
           },
           "429": {
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -538,9 +410,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -550,19 +420,13 @@
     },
     "/settings": {
       "put": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
           "200": {
             "description": "Успешно",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Settings"
-                }
+                "schema": { "$ref": "#/components/schemas/Settings" }
               }
             }
           },
@@ -570,9 +434,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -580,9 +442,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -590,9 +450,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -600,9 +458,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -612,9 +468,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Settings"
-              }
+              "schema": { "$ref": "#/components/schemas/Settings" }
             }
           }
         }
@@ -622,11 +476,7 @@
     },
     "/deliveries": {
       "get": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
           "200": {
             "description": "Успешно",
@@ -634,9 +484,7 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Delivery"
-                  }
+                  "items": { "$ref": "#/components/schemas/Delivery" }
                 }
               }
             }
@@ -645,9 +493,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -655,9 +501,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -665,9 +509,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -677,11 +519,7 @@
     },
     "/demo/seed": {
       "post": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
           "200": {
             "description": "Успешно",
@@ -689,9 +527,7 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Event"
-                  }
+                  "items": { "$ref": "#/components/schemas/Event" }
                 }
               }
             }
@@ -700,29 +536,19 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
           "403": {
             "description": "Недоступно для реального профиля",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "content": { "text/plain": { "schema": { "type": "string" } } }
           },
           "429": {
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -730,9 +556,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -742,22 +566,14 @@
     },
     "/data": {
       "delete": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "security": [{ "session": [] }],
         "responses": {
-          "204": {
-            "description": "Удалено"
-          },
+          "204": { "description": "Удалено" },
           "401": {
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -765,9 +581,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
@@ -775,9 +589,7 @@
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -788,11 +600,7 @@
     "/max/webhook": {
       "post": {
         "summary": "Входящие обновления MAX, постоянная очередь с подавлением повторов",
-        "security": [
-          {
-            "webhook": []
-          }
-        ],
+        "security": [{ "webhook": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -803,18 +611,28 @@
                 "properties": {
                   "update_type": {
                     "type": "string",
-                    "enum": ["bot_started", "bot_stopped", "message_created"]
+                    "enum": [
+                      "bot_started",
+                      "bot_stopped",
+                      "message_created",
+                      "message_callback"
+                    ]
                   },
-                  "timestamp": {
-                    "type": "number"
-                  },
-                  "user": {
+                  "timestamp": { "type": "number" },
+                  "user": { "type": "object", "additionalProperties": true },
+                  "message": { "type": "object", "additionalProperties": true },
+                  "callback": {
                     "type": "object",
-                    "additionalProperties": true
-                  },
-                  "message": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "required": ["callback_id", "payload", "user"],
+                    "properties": {
+                      "callback_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "payload": { "type": "string", "maxLength": 128 },
+                      "user": { "type": "object", "additionalProperties": true }
+                    }
                   }
                 },
                 "additionalProperties": true
@@ -825,41 +643,21 @@
         "responses": {
           "200": {
             "description": "Принято или неподдерживаемый тип пропущен",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "content": { "text/plain": { "schema": { "type": "string" } } }
           },
           "400": {
             "description": "Не указан timestamp",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "content": { "text/plain": { "schema": { "type": "string" } } }
           },
           "403": {
             "description": "Неверный секрет",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "content": { "text/plain": { "schema": { "type": "string" } } }
           },
           "429": {
             "description": "Ошибка запроса",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           }
@@ -884,11 +682,7 @@
       "Error": {
         "type": "object",
         "required": ["error"],
-        "properties": {
-          "error": {
-            "type": "string"
-          }
-        }
+        "properties": { "error": { "type": "string" } }
       },
       "EventInput": {
         "type": "object",
@@ -902,17 +696,65 @@
               "tax",
               "international",
               "insurance",
+              "rf-004",
+              "rf-009",
+              "rf-010",
+              "rf-012",
+              "rf-015",
+              "rf-018",
+              "rf-020",
+              "rf-029",
+              "rf-030",
+              "rf-031",
+              "rf-035",
+              "rf-047",
+              "rf-048",
+              "rf-050",
+              "rf-051",
+              "rf-053",
+              "rf-054",
+              "rf-062",
+              "rf-071",
+              "rf-074",
+              "rf-075",
+              "rf-085",
+              "rf-087",
+              "rf-092",
+              "rf-093",
+              "rf-094",
+              "rf-103",
+              "rf-108",
+              "rf-112",
+              "rf-116",
+              "rf-120",
+              "rf-122",
+              "rf-124",
+              "rf-125",
+              "rf-126",
+              "rf-128",
+              "rf-129",
+              "rf-147",
+              "rf-150",
+              "rf-152",
               "custom"
             ]
           },
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
+          "title": { "type": "string", "minLength": 1, "maxLength": 120 },
           "category": {
             "type": "string",
-            "enum": ["documents", "health", "payments", "other"]
+            "enum": [
+              "documents",
+              "transport",
+              "payments",
+              "home",
+              "health",
+              "social",
+              "family",
+              "education",
+              "work",
+              "migration",
+              "other"
+            ]
           },
           "baseDate": {
             "type": "string",
@@ -933,38 +775,21 @@
           "reminders": {
             "type": "array",
             "maxItems": 8,
-            "items": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 365
-            },
+            "items": { "type": "integer", "minimum": 0, "maximum": 365 },
             "default": [30, 7, 1, 0]
           },
-          "notes": {
-            "type": "string",
-            "maxLength": 2000,
-            "default": ""
-          },
-          "documentName": {
-            "type": "string",
-            "maxLength": 160,
-            "default": ""
-          }
+          "notes": { "type": "string", "maxLength": 2000, "default": "" },
+          "documentName": { "type": "string", "maxLength": 160, "default": "" }
         }
       },
       "Event": {
         "allOf": [
-          {
-            "$ref": "#/components/schemas/EventInput"
-          },
+          { "$ref": "#/components/schemas/EventInput" },
           {
             "type": "object",
             "required": ["id", "dueDate", "completed", "createdAt"],
             "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
+              "id": { "type": "string", "format": "uuid" },
               "dueDate": {
                 "type": "string",
                 "format": "date",
@@ -975,13 +800,8 @@
                 "format": "date",
                 "description": "Существующая календарная дата, 1900–2200"
               },
-              "completed": {
-                "type": "boolean"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              }
+              "completed": { "type": "boolean" },
+              "createdAt": { "type": "string", "format": "date-time" }
             }
           }
         ]
@@ -990,57 +810,30 @@
         "type": "object",
         "required": ["enabled", "hour", "timezone", "privateMessages"],
         "properties": {
-          "enabled": {
-            "type": "boolean"
-          },
-          "hour": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 23
-          },
-          "timezone": {
-            "type": "string",
-            "example": "Asia/Novosibirsk"
-          },
-          "privateMessages": {
-            "type": "boolean"
-          }
+          "enabled": { "type": "boolean" },
+          "hour": { "type": "integer", "minimum": 0, "maximum": 23 },
+          "timezone": { "type": "string", "example": "Asia/Novosibirsk" },
+          "privateMessages": { "type": "boolean" }
         }
       },
       "User": {
         "type": "object",
         "required": ["id", "name", "settings", "botStarted", "demo"],
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "settings": {
-            "$ref": "#/components/schemas/Settings"
-          },
-          "botStarted": {
-            "type": "boolean"
-          },
-          "demo": {
-            "type": "boolean"
-          }
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "settings": { "$ref": "#/components/schemas/Settings" },
+          "botStarted": { "type": "boolean" },
+          "demo": { "type": "boolean" }
         }
       },
       "Delivery": {
         "type": "object",
         "required": ["id", "eventId", "title", "status", "sentAt"],
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "eventId": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
+          "id": { "type": "string" },
+          "eventId": { "type": "string" },
+          "title": { "type": "string" },
           "status": {
             "type": "string",
             "enum": ["pending", "sending", "sent", "failed"]

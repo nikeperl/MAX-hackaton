@@ -6,6 +6,72 @@ import { createApp } from "../server/app.js";
 import { openDatabase } from "../server/db.js";
 import { processInbox } from "../server/bot.js";
 
+test("webhook validates callbacks and deduplicates by callback ID, not message or timestamp", async () => {
+  const db = openDatabase(":memory:");
+  const acknowledged: string[] = [];
+  const server = createApp(db, {
+    demo: false,
+    production: true,
+    token: "fake-test-token",
+    username: "test_bot",
+    webhookSecret: "test-secret",
+    onCallback: (id) => {
+      acknowledged.push(id);
+    },
+  }).listen(0, "127.0.0.1");
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/max/webhook`;
+  const post = (body: unknown, secret = "test-secret") =>
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Max-Bot-Api-Secret": secret,
+      },
+      body: JSON.stringify(body),
+    });
+  const update = {
+    update_type: "message_callback",
+    timestamp: 1,
+    callback: { callback_id: "first", payload: "menu", user: { user_id: 42 } },
+    message: {
+      recipient: { chat_type: "dialog" },
+      body: { mid: "same-message" },
+    },
+  };
+  try {
+    assert.equal((await post(update, "wrong")).status, 403);
+    assert.equal(
+      (await post({ ...update, callback: { payload: "menu" } })).status,
+      400,
+    );
+    assert.equal((await post(update)).status, 200);
+    assert.equal((await post({ ...update, timestamp: 2 })).status, 200);
+    assert.equal(
+      (
+        await post({
+          ...update,
+          callback: { ...update.callback, callback_id: "second" },
+        })
+      ).status,
+      200,
+    );
+    assert.deepEqual(acknowledged, ["first", "second"]);
+    assert.equal(
+      (db.prepare("SELECT count(*) AS n FROM inbox").get() as any).n,
+      2,
+    );
+    let replies = 0;
+    await processInbox(db, async () => {
+      replies++;
+    });
+    assert.equal(replies, 2);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    db.close();
+  }
+});
+
 test("verified MAX session and authenticated webhook share events without duplicating webhook redelivery", async () => {
   const db = openDatabase(":memory:");
   const token = "fake-test-token";

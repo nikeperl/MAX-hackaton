@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { postMaxJson } from "./max-api.js";
+import { maxUpdateTypes } from "./max-events.js";
 
 // Read-only diagnostic. Never print tokens, webhook secrets or user conversations.
 async function checkBot() {
@@ -39,9 +40,7 @@ async function checkBot() {
     active?.update_types?.join(", ") || "все/не заданы",
   );
   const missing = active?.update_types?.length
-    ? ["bot_started", "bot_stopped", "message_created"].filter(
-        (type) => !active.update_types!.includes(type),
-      )
+    ? maxUpdateTypes.filter((type) => !active.update_types!.includes(type))
     : [];
   if (!active || missing.length) process.exitCode = 1;
 }

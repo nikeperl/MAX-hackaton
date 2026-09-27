@@ -10,6 +10,7 @@
     "test": "tsx --test tests/*.test.ts",
     "bot:subscribe": "tsx server/subscribe.ts",
     "bot:check": "tsx server/check.ts",
+    "api:sync": "tsx scripts/sync-api-catalog.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

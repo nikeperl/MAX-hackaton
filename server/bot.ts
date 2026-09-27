@@ -10,12 +10,17 @@ import {
   formatDate,
   todayIn,
   addDays,
+  nextSteps,
   type Deadline,
   type User,
 } from "../shared/domain.js";
 import { postMaxJson } from "./max-api.js";
-import { commandReply } from "./commands.js";
-export type SendMessage = (userId: string, text: string) => Promise<void>;
+import { chatReply, menuButtons, type Keyboard } from "./chat.js";
+export type SendMessage = (
+  userId: string,
+  text: string,
+  buttons?: Keyboard,
+) => Promise<void>;
 export function maxSender(
   token: string,
   username: string,
@@ -24,7 +29,7 @@ export function maxSender(
 ): SendMessage {
   // One queue per process keeps both global and per-dialog limits below MAX limits.
   let queue = Promise.resolve();
-  return (userId, text) => {
+  return (userId, text, buttons = menuButtons) => {
     const job = queue.then(async () => {
       const body = await transport<{ message?: unknown }>(
         `${apiUrl}/messages?user_id=${encodeURIComponent(userId)}`,
@@ -32,13 +37,13 @@ export function maxSender(
         {
           text: text.slice(0, 4000),
           notify: true,
-          ...(username
-            ? {
-                attachments: [
-                  {
-                    type: "inline_keyboard",
-                    payload: {
-                      buttons: [
+          attachments: [
+            {
+              type: "inline_keyboard",
+              payload: {
+                buttons: [
+                  ...(username
+                    ? [
                         [
                           {
                             type: "link",
@@ -46,12 +51,13 @@ export function maxSender(
                             url: `https://max.ru/${username}?startapp`,
                           },
                         ],
-                      ],
-                    },
-                  },
+                      ]
+                    : []),
+                  ...buttons,
                 ],
-              }
-            : {}),
+              },
+            },
+          ],
         },
       );
       if (!body.message) throw new Error("MAX не подтвердил отправку");
@@ -69,9 +75,15 @@ export function reminderText(
   milestone = false,
 ) {
   if (user.settings.privateMessages)
-    return `Вовремя: ${milestone ? "наступила важная дата" : "пришло время проверить срок события"} в вашем календаре. Посмотреть дату и рекомендации в чате: /show ${event.id.slice(0, 8)}. Или откройте мини-приложение.`;
+    return `Вовремя: ${milestone ? "наступила важная дата" : "пришло время проверить срок события"} в вашем календаре.\n\nСледующие действия: откройте «Рекомендации», проверьте нужные документы и способ обращения. После выполнения отметьте событие завершённым.\nДетали скрыты вашей настройкой приватности. Посмотреть их: /show ${event.id.slice(0, 8)}.`;
   const template = templates.find((t) => t.id === event.templateId)!;
-  return `Вовремя · ${event.title}\n${milestone ? "Наступила дата замены паспорта.\n" : ""}${event.dueDate < today ? "Срок прошёл" : event.dueDate === today ? "Срок сегодня" : "Срок"}: ${formatDate(event.dueDate)}\n\n${template.steps.join("\n")}\n${event.notes ? `\nВаша заметка: ${event.notes}\n` : ""}${"source" in template ? `\nИсточник: ${template.source}` : ""}\n\nЗавершить: /done ${event.id.slice(0, 8)}`;
+  return `Вовремя · ${event.title}\n${milestone ? "Наступила дата замены паспорта.\n" : ""}${event.dueDate < today ? "Срок прошёл" : event.dueDate === today ? "Срок сегодня" : "Срок"}: ${formatDate(event.dueDate)}\n\nЧто сделать:\n${nextSteps(
+    { ...event, notes: event.notes.slice(0, 700) },
+  )
+    .map((step, i) => `${i + 1}. ${step}`)
+    .join(
+      "\n",
+    )}${template.link ? `\n\nУслуга или ведомство: ${template.link}` : ""}${"source" in template ? `\nИсточник: ${template.source}` : ""}\n\nЗавершить: /done ${event.id.slice(0, 8)}`;
 }
 export function dueReminders(event: Deadline, user: User, now: Date) {
   if (
@@ -156,6 +168,21 @@ export async function processReminders(
               todayIn(freshUser.settings.timezone, now),
               point.milestone,
             ),
+            [
+              [
+                {
+                  type: "callback",
+                  text: "Рекомендации",
+                  payload: `show:${event.id}`,
+                },
+                {
+                  type: "callback",
+                  text: "Выполнено",
+                  payload: `done:${event.id}`,
+                },
+              ],
+              ...menuButtons,
+            ],
           );
           db.prepare(
             "UPDATE deliveries SET status='sent',sent_at=? WHERE id=?",
@@ -189,7 +216,7 @@ export async function processInbox(
       if (row.response) {
         const reply = JSON.parse(row.response);
         if (getUser(db, reply.userId)?.botStarted)
-          await send(reply.userId, reply.text);
+          await send(reply.userId, reply.text, reply.buttons);
         db.prepare(
           "UPDATE inbox SET status='done',payload='{}',response=NULL WHERE id=?",
         ).run(row.id);
@@ -200,6 +227,7 @@ export async function processInbox(
         const id = String(update.user?.user_id || "");
         const user = getUser(db, id);
         if (user) {
+          db.prepare("DELETE FROM chat_state WHERE user_id=?").run(id);
           saveSettings(db, id, { ...user.settings, enabled: false });
           db.prepare("UPDATE users SET bot_started=0 WHERE id=?").run(id);
         }
@@ -211,7 +239,9 @@ export async function processInbox(
       const source =
         update.update_type === "bot_started"
           ? update.user
-          : update.message?.sender;
+          : update.update_type === "message_callback"
+            ? update.callback?.user
+            : update.message?.sender;
       const isDirect =
         update.update_type === "bot_started" ||
         update.message?.recipient?.chat_type === "dialog";
@@ -240,16 +270,23 @@ export async function processInbox(
       const text =
         update.update_type === "bot_started"
           ? "/start"
-          : String(update.message?.body?.text || "");
+          : update.update_type === "message_callback"
+            ? String(update.callback?.payload || "")
+            : String(update.message?.body?.text || "");
       const answer = db.transaction(() => {
-        const result = commandReply(db, user, text);
+        const result = chatReply(
+          db,
+          user,
+          text,
+          update.update_type === "message_callback",
+        );
         db.prepare("UPDATE inbox SET response=? WHERE id=?").run(
-          JSON.stringify({ userId: id, text: result }),
+          JSON.stringify({ userId: id, ...result }),
           row.id,
         );
         return result;
       })();
-      await send(id, answer);
+      await send(id, answer.text, answer.buttons);
       db.prepare(
         "UPDATE inbox SET status='done',payload='{}',response=NULL WHERE id=?",
       ).run(row.id);

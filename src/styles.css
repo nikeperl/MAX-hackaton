@@ -899,6 +899,7 @@ main {
 }
 .calendar-legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 17px;
@@ -921,6 +922,8 @@ main {
 .filter-chips i,
 .day-event > i {
   display: inline-block;
+  background: #6b85da;
+  flex-shrink: 0;
   width: 5px;
   height: 5px;
   border-radius: 50%;
@@ -936,6 +939,21 @@ i.payments {
 }
 i.other {
   background: #b7a1cc;
+}
+i.transport,
+i.work {
+  background: #4878e8;
+}
+i.home,
+i.family {
+  background: #7556dd;
+}
+i.social,
+i.migration {
+  background: #1592ae;
+}
+i.education {
+  background: #9b62d1;
 }
 .upcoming-column > .section-heading {
   margin: 2px 0 17px;
@@ -973,6 +991,8 @@ i.other {
   align-items: center;
 }
 .category-icon {
+  background: #edf1ff;
+  color: #375ac4;
   width: 37px;
   height: 37px;
   border-radius: 10px;
@@ -1360,6 +1380,30 @@ footer > span {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+.catalog-controls {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+}
+.catalog-controls .field {
+  min-width: 0;
+}
+.template-card > small {
+  display: block;
+  margin-top: 10px;
+  color: #657493;
+}
+.empty-catalog {
+  padding: 24px 0;
+  text-align: center;
+  color: #657493;
+}
+@media (max-width: 600px) {
+  .catalog-controls {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 .template-card {
   text-align: left;

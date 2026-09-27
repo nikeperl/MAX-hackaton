@@ -2,6 +2,7 @@ import express from "express";
 import { randomBytes, randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { z } from "zod";
+import { maxUpdateTypes } from "./max-events.js";
 import {
   type DB,
   ensureUser,
@@ -23,6 +24,8 @@ export type Config = {
   username: string;
   webhookSecret: string;
   production: boolean;
+  onUpdate?: () => void;
+  onCallback?: (id: string) => void;
 };
 export function createApp(db: DB, config: Config) {
   const app = express();
@@ -69,11 +72,7 @@ export function createApp(db: DB, config: Config) {
       return;
     }
     const update = req.body;
-    if (
-      !["bot_started", "bot_stopped", "message_created"].includes(
-        update?.update_type,
-      )
-    ) {
+    if (!maxUpdateTypes.includes(update?.update_type)) {
       res.sendStatus(200);
       return;
     }
@@ -81,20 +80,39 @@ export function createApp(db: DB, config: Config) {
       res.sendStatus(400);
       return;
     }
+    if (
+      update.update_type === "message_callback" &&
+      (typeof update.callback?.callback_id !== "string" ||
+        !update.callback.callback_id ||
+        update.callback.callback_id.length > 256 ||
+        typeof update.callback.payload !== "string" ||
+        update.callback.payload.length > 128)
+    ) {
+      res.sendStatus(400);
+      return;
+    }
     // Persist before acknowledging. Retries of the same update cannot enqueue another reply.
     const id = hashToken(
-      JSON.stringify([
-        update.update_type,
-        update.timestamp,
-        update.message?.body?.mid || update.user?.user_id || "",
-        update.message?.sender?.user_id || "",
-      ]),
+      JSON.stringify(
+        update.update_type === "message_callback"
+          ? [update.update_type, update.callback.callback_id]
+          : [
+              update.update_type,
+              update.timestamp,
+              update.message?.body?.mid || update.user?.user_id || "",
+              update.message?.sender?.user_id || "",
+            ],
+      ),
     );
-    db.prepare("INSERT OR IGNORE INTO inbox(id,payload) VALUES(?,?)").run(
-      id,
-      JSON.stringify(update),
-    );
+    const inserted = db
+      .prepare("INSERT OR IGNORE INTO inbox(id,payload) VALUES(?,?)")
+      .run(id, JSON.stringify(update));
     res.sendStatus(200);
+    if (inserted.changes) {
+      if (update.update_type === "message_callback")
+        config.onCallback?.(update.callback.callback_id);
+      config.onUpdate?.();
+    }
   });
   app.post("/api/session", (req, res) => {
     try {
@@ -122,12 +140,10 @@ export function createApp(db: DB, config: Config) {
       );
       res.json({ token, user });
     } catch {
-      res
-        .status(401)
-        .json({
-          error:
-            "Не удалось подтвердить вход. Откройте приложение заново через MAX.",
-        });
+      res.status(401).json({
+        error:
+          "Не удалось подтвердить вход. Откройте приложение заново через MAX.",
+      });
     }
   });
   app.use("/api", (req, res, next) => {
@@ -171,11 +187,12 @@ export function createApp(db: DB, config: Config) {
       res.sendStatus(404);
       return;
     }
+    const deadline = calculateDeadline(input);
     const event = {
       ...old,
       ...input,
-      ...calculateDeadline(input),
-      milestoneDate: calculateDeadline(input).milestoneDate,
+      ...deadline,
+      milestoneDate: deadline.milestoneDate,
     };
     db.transaction(() => {
       db.prepare("UPDATE events SET data=? WHERE id=? AND user_id=?").run(
@@ -238,6 +255,9 @@ export function createApp(db: DB, config: Config) {
   });
   app.delete("/api/data", (_req, res) => {
     db.transaction(() => {
+      db.prepare("DELETE FROM chat_state WHERE user_id=?").run(
+        res.locals.userId,
+      );
       db.prepare("DELETE FROM events WHERE user_id=?").run(res.locals.userId);
       saveSettings(db, res.locals.userId, {
         ...getUser(db, res.locals.userId)!.settings,
@@ -263,11 +283,9 @@ export function createApp(db: DB, config: Config) {
       else if (error instanceof Error && /Выберите|Укажите/.test(error.message))
         res.status(400).json({ error: error.message });
       else
-        res
-          .status(500)
-          .json({
-            error: "Не удалось выполнить действие. Попробуйте ещё раз.",
-          });
+        res.status(500).json({
+          error: "Не удалось выполнить действие. Попробуйте ещё раз.",
+        });
     },
   );
   return app;
