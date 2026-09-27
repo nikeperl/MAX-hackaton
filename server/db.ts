@@ -12,6 +12,7 @@ import {
   addDays,
   addMonths,
   templateById,
+  resolveTemplateId,
   todayIn,
 } from "../shared/domain.js";
 export function openDatabase(path: string) {
@@ -69,12 +70,18 @@ export function listEvents(db: DB, id: string): Deadline[] {
   )
     .map((r) => {
       const event = JSON.parse(r.data) as Deadline;
+      const templateId = resolveTemplateId(event.templateId);
+      if (!templateId)
+        throw new Error(
+          `Неизвестная услуга в сохранённом событии: ${event.templateId}`,
+        );
       return {
         ...event,
+        templateId,
         category:
-          event.templateId === "custom"
+          templateId === "custom"
             ? event.category
-            : templateById[event.templateId].category,
+            : templateById[templateId].category,
       };
     })
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));

@@ -4,10 +4,20 @@ import {
   templates,
   templateById,
   chatCopy,
+  resolveTemplateId,
+  sortTemplatesForDisplay,
   type Category,
   type TemplateId,
 } from "./content.js";
-export { categories, templates, templateById, type Category, type TemplateId };
+export {
+  categories,
+  templates,
+  templateById,
+  resolveTemplateId,
+  sortTemplatesForDisplay,
+  type Category,
+  type TemplateId,
+};
 export function isDate(value: string) {
   return (
     /^\d{4}-\d{2}-\d{2}$/.test(value) &&
@@ -61,9 +71,10 @@ export function nextSteps(event: Pick<EventInput, "templateId" | "notes">) {
 }
 export const eventInputSchema = z
   .object({
-    templateId: z.enum(
-      templates.map((t) => t.id) as [TemplateId, ...TemplateId[]],
-    ),
+    templateId: z
+      .string()
+      .refine((id) => !!resolveTemplateId(id), "Услуга не найдена")
+      .transform((id) => resolveTemplateId(id)!),
     title: z.string().trim().min(1).max(120),
     category: z.enum(Object.keys(categories) as [Category, ...Category[]]),
     baseDate: dateSchema,

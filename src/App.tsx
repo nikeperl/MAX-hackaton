@@ -2,6 +2,7 @@ import {
   useEffect,
   useRef,
   useState,
+  Fragment,
   type FormEvent,
   type ReactNode,
 } from "react";
@@ -51,6 +52,7 @@ import {
   categories,
   templates,
   templateById,
+  sortTemplatesForDisplay,
   nextSteps,
   calculateDeadline,
   formatDate,
@@ -1396,20 +1398,18 @@ function EventDetails({ event, today }: { event: Deadline; today: string }) {
       {t.calculation === "passport" && (
         <p className="muted">Дополнительно — в день 20-летия или 45-летия.</p>
       )}
-      {t.scope && <p className="muted">{t.scope}</p>}
+      {t.details.conditions && <p className="muted">{t.details.conditions}</p>}
       <div className="source-links">
-        {t.link && (
-          <a href={t.link} target="_blank" rel="noreferrer">
+        {t.details.serviceUrl && (
+          <a href={t.details.serviceUrl} target="_blank" rel="noreferrer">
             Перейти к услуге или ведомству
             <ExternalLink size={14} />
           </a>
         )}
-        {t.source && (
-          <a href={t.source} target="_blank" rel="noreferrer">
+        {t.details.source && (
+          <a href={t.details.source.url} target="_blank" rel="noreferrer">
             Источник правила
-            {t.sourceReviewedOn
-              ? ` · проверен ${formatDate(t.sourceReviewedOn)}`
-              : ""}
+            {` · проверен ${formatDate(t.details.source.reviewedOn)}`}
             <ExternalLink size={14} />
           </a>
         )}
@@ -1459,13 +1459,22 @@ function EventEditor({
   const t = templates.find((v) => v.id === selected);
   const [sphere, setSphere] = useState<Category | "all">("all");
   const [templateSearch, setTemplateSearch] = useState("");
-  const matchingTemplates = templates.filter(
-    (item) =>
-      (sphere === "all" || item.category === sphere) &&
-      `${item.title} ${item.description} ${categories[item.category]}`
-        .toLocaleLowerCase("ru")
-        .includes(templateSearch.trim().toLocaleLowerCase("ru")),
+  const matchingTemplates = sortTemplatesForDisplay(
+    templates.filter(
+      (item) =>
+        (sphere === "all" || item.category === sphere) &&
+        `${item.title} ${item.description} ${categories[item.category]}`
+          .toLocaleLowerCase("ru")
+          .includes(templateSearch.trim().toLocaleLowerCase("ru")),
+    ),
   );
+  const templateGroups = Object.entries(categories)
+    .map(([category, label]) => ({
+      category,
+      label,
+      items: matchingTemplates.filter((item) => item.category === category),
+    }))
+    .filter((group) => group.items.length);
   function choose(id: TemplateId) {
     const template = templates.find((v) => v.id === id)!;
     setSelected(id);
@@ -1563,18 +1572,23 @@ function EventEditor({
             Найдено услуг: {matchingTemplates.length}
           </p>
           <div className="template-grid">
-            {matchingTemplates.map((t) => (
-              <button
-                key={t.id}
-                className="template-card"
-                onClick={() => choose(t.id)}
-              >
-                <CategoryIcon category={t.category} />
-                <small>{categories[t.category]}</small>
-                <h3>{t.title}</h3>
-                <p>{t.description}</p>
-                <ArrowUpRight size={18} />
-              </button>
+            {templateGroups.map((group) => (
+              <Fragment key={group.category}>
+                <h3 className="template-group-title">{group.label}</h3>
+                {group.items.map((t) => (
+                  <button
+                    key={t.id}
+                    className="template-card"
+                    onClick={() => choose(t.id)}
+                  >
+                    <CategoryIcon category={t.category} />
+                    <small>{categories[t.category]}</small>
+                    <h3>{t.title}</h3>
+                    <p>{t.description}</p>
+                    <ArrowUpRight size={18} />
+                  </button>
+                ))}
+              </Fragment>
             ))}
           </div>
           {!matchingTemplates.length && (
@@ -1676,7 +1690,9 @@ function EventEditor({
             <Info size={17} />
             <p>{t?.rule}</p>
           </div>
-          {t?.scope && <p className="muted">{t.scope}</p>}
+          {t?.details.conditions && (
+            <p className="muted">{t.details.conditions}</p>
+          )}
           {calculated && (
             <div className="calculated">
               <Sparkles size={18} />

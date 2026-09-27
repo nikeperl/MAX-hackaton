@@ -1385,6 +1385,15 @@ footer > span {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+.template-group-title {
+  grid-column: 1 / -1;
+  margin: 18px 0 2px;
+  color: #172443;
+  font-size: 15px;
+}
+.template-group-title:first-child {
+  margin-top: 0;
+}
 .catalog-controls {
   display: grid;
   grid-template-columns: 1.4fr 1fr;

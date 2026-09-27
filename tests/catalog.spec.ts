@@ -10,6 +10,25 @@ for (const width of [1440, 390]) {
       .locator(".page-heading")
       .getByRole("button", { name: "Добавить событие", exact: true })
       .click();
+    await expect(page.locator(".template-group-title").first()).toHaveText(
+      "Личные документы",
+    );
+    const firstGroupTitles = await page
+      .locator(".template-group-title")
+      .first()
+      .evaluate((heading) => {
+        const titles: string[] = [];
+        let item = heading.nextElementSibling;
+        while (item?.classList.contains("template-card")) {
+          titles.push(item.querySelector("h3")?.textContent ?? "");
+          item = item.nextElementSibling;
+        }
+        return titles;
+      });
+    expect(firstGroupTitles.length).toBeGreaterThan(1);
+    expect(firstGroupTitles).toEqual(
+      [...firstGroupTitles].sort(new Intl.Collator("ru").compare),
+    );
     await page.getByLabel("Сфера", { exact: true }).selectOption("home");
     await page.getByLabel("Поиск услуги").fill("водосчётчика");
     await expect(page.locator(".template-card")).toHaveCount(1);

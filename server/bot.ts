@@ -74,8 +74,8 @@ export function reminderText(
     nextSteps({ ...event, notes: event.notes.slice(0, 700) })
       .map((step, i) => `${i + 1}. ${step}`)
       .join("\n"),
-    template.link,
-    template.source,
+    template.details.serviceUrl ?? "",
+    template.details.source?.url ?? "",
   );
 }
 export function dueReminders(event: Deadline, user: User, now: Date) {

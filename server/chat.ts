@@ -3,6 +3,8 @@ import {
   categories,
   templates,
   templateById,
+  resolveTemplateId,
+  sortTemplatesForDisplay,
   eventInputSchema,
   calculateDeadline,
   formatDate,
@@ -73,7 +75,13 @@ function readDraft(db: DB, userId: string): Draft | undefined {
     clearDraft(db, userId);
     return;
   }
-  return JSON.parse(row.data);
+  const draft = JSON.parse(row.data) as Draft;
+  const templateId = resolveTemplateId(draft.templateId);
+  if (!templateId) {
+    clearDraft(db, userId);
+    return;
+  }
+  return { ...draft, templateId };
 }
 function draftInput(draft: Draft) {
   return eventInputSchema.parse({
@@ -139,7 +147,9 @@ export function chatReply(
       const page = Number(extra || 0);
       if (!Number.isInteger(page) || page < 0)
         return reply(chatCopy.messages.catalogReset);
-      const items = templates.filter((t) => t.category === arg);
+      const items = sortTemplatesForDisplay(
+        templates.filter((t) => t.category === arg),
+      );
       const buttons: Keyboard = items
         .slice(page * 6, page * 6 + 6)
         .map((t) => [button(t.title.slice(0, 100), `new:${t.id}`)]);
@@ -158,7 +168,7 @@ export function chatReply(
       ]);
     }
     if (action === "new") {
-      const t = templates.find((t) => t.id === arg);
+      const t = templates.find((t) => t.id === resolveTemplateId(arg));
       if (!t) return reply(chatCopy.messages.serviceMissing);
       return prompt(db, user, {
         nonce: randomUUID(),
