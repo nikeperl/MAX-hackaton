@@ -10,11 +10,10 @@ import {
 import { maxSender, processInbox, processReminders } from "../server/bot.js";
 import { commandReply } from "../server/commands.js";
 
-test("MAX transport sends a notifying message with a calendar link and requires delivery acknowledgement", async () => {
+test("MAX transport sends a notifying message with menu buttons and requires delivery acknowledgement", async () => {
   let calls = 0;
   const sender = maxSender(
     "fake-test-token",
-    "test_bot",
     "https://platform-api2.max.ru",
     async <T>(url: string, token: string, payload: unknown) => {
       assert.equal(url, "https://platform-api2.max.ru/messages?user_id=42");
@@ -22,8 +21,14 @@ test("MAX transport sends a notifying message with a calendar link and requires 
       const message = payload as any;
       assert.equal(message.notify, true);
       assert.equal(
-        message.attachments[0].payload.buttons[0][0].url,
-        "https://max.ru/test_bot?startapp",
+        message.attachments[0].payload.buttons[0][0].text,
+        "Добавить событие",
+      );
+      assert.equal(
+        message.attachments[0].payload.buttons
+          .flat()
+          .some((button: any) => button.type === "link"),
+        false,
       );
       return (
         ++calls === 1 ? {} : { message: { body: { mid: "confirmed" } } }
@@ -58,7 +63,7 @@ test("chat-only journey creates, configures, reminds, explains and completes sha
     return sent.at(-1)!.text;
   };
   try {
-    assert.match(await chat("/start"), /Добавить событие/);
+    assert.match(await chat("/start"), /меню чата/);
     assert.match(
       await chat("/add 01.12.2026 Оплатить Налог"),
       /Добавлено: Оплатить Налог/,
@@ -75,7 +80,8 @@ test("chat-only journey creates, configures, reminds, explains and completes sha
     await processReminders(db, send, new Date("2026-11-24T02:00:00Z"));
     assert.equal(sent.length, count + 1);
     assert.equal(sent.at(-1)!.id, "42");
-    assert.match(sent.at(-1)!.text, /\/show/);
+    assert.match(sent.at(-1)!.text, /Рекомендации/);
+    assert.doesNotMatch(sent.at(-1)!.text, /\/show/);
     assert.ok(!sent.at(-1)!.text.includes(event.title));
     await processReminders(db, send, new Date("2026-11-24T02:01:00Z"));
     assert.equal(sent.length, count + 1);
@@ -170,9 +176,9 @@ test("chat validates dates, parameters and paginates; passport and medical calcu
     chat("/health 29.02.2024 12");
     assert.equal(listEvents(db, user.id)[0].dueDate, "2025-02-28");
     for (let i = 0; i < 10; i++) chat(`/add 01.12.2026 Событие ${i}`);
-    assert.match(chat("/next"), /Далее: \/next 2/);
+    assert.match(chat("/next"), /Другие события доступны/);
     assert.match(chat("/next 2"), /Замена паспорта РФ/);
-    assert.match(chat("/nonsense"), /Не удалось распознать/);
+    assert.match(chat("/nonsense"), /меню чата/);
   } finally {
     db.close();
   }

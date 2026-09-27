@@ -27,11 +27,15 @@ const app = createApp(db, {
   webhookSecret,
   onUpdate: () => setImmediate(() => void tick()),
   onCallback: (id) => {
-    void postMaxJson(
+    void postMaxJson<{ success: boolean }>(
       `${process.env.MAX_API_URL || "https://platform-api2.max.ru"}/answers?callback_id=${encodeURIComponent(id)}`,
       token,
-      { notification: "Принято" },
-    ).catch(() => console.error("Не удалось подтвердить нажатие кнопки MAX."));
+      {},
+    )
+      .then((answer) => {
+        if (!answer.success) console.error("MAX не подтвердил нажатие кнопки.");
+      })
+      .catch(() => console.error("Не удалось подтвердить нажатие кнопки MAX."));
   },
 });
 const server = app.listen(Number(process.env.PORT || 3001), () =>
@@ -39,7 +43,7 @@ const server = app.listen(Number(process.env.PORT || 3001), () =>
     `Вовремя: http://localhost:${process.env.PORT || 3001} · ${demo ? "локальное демо" : "MAX"}`,
   ),
 );
-const send = maxSender(token, username, process.env.MAX_API_URL);
+const send = maxSender(token, process.env.MAX_API_URL);
 let busy = false;
 const tick = async () => {
   if (busy || demo) return;

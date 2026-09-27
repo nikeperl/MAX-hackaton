@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { postMaxJson } from "./max-api.js";
-import { botCommands } from "./commands.js";
 import { maxUpdateTypes } from "./max-events.js";
 const { MAX_BOT_TOKEN, MAX_WEBHOOK_SECRET, APP_URL } = process.env;
 if (!MAX_BOT_TOKEN || !MAX_WEBHOOK_SECRET || !APP_URL?.startsWith("https://"))
@@ -26,7 +25,7 @@ console.log("Webhook подключён:", url.toString());
 await postMaxJson(
   `${process.env.MAX_API_URL || "https://platform-api2.max.ru"}/me/commands`,
   MAX_BOT_TOKEN,
-  { commands: botCommands },
+  { commands: [] },
   "PATCH",
 );
 console.log("Меню команд бота обновлено.");

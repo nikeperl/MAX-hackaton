@@ -20,6 +20,7 @@ import {
   type DB,
 } from "./db.js";
 import { commandReply } from "./commands.js";
+import { chatCopy } from "./chat-content.js";
 
 export type BotButton =
   | { type: "callback"; text: string; payload: string }
@@ -124,10 +125,7 @@ export function chatReply(
         "Вовремя — сроки и следующие действия. Выберите, что сделать.",
       );
     }
-    if (action === "help")
-      return reply(
-        "Выберите сферу и услугу кнопками, затем отправьте дату. События общие с мини-приложением. В настройках можно включить напоминания и выбрать время. Команды /help и /add также работают.",
-      );
+    if (action === "help") return reply(chatCopy.help);
     if (action === "catalog") {
       clearDraft(db, user.id);
       if (!arg)
@@ -298,9 +296,7 @@ export function chatReply(
   }
   if (text === "/start" || text.toLowerCase() === "меню") {
     clearDraft(db, user.id);
-    return reply(
-      "Вовремя — ваши сроки и рекомендации. Начните с кнопки «Добавить событие» или откройте свои события.",
-    );
+    return reply(chatCopy.welcome);
   }
   if (text === "/cancel" || text.toLowerCase() === "отмена") {
     clearDraft(db, user.id);
@@ -358,5 +354,5 @@ export function chatReply(
     }
     return prompt(db, user, draft);
   }
-  return reply(commandReply(db, user, text));
+  return reply(chatCopy.unknown);
 }

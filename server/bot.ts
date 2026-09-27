@@ -16,6 +16,7 @@ import {
 } from "../shared/domain.js";
 import { postMaxJson } from "./max-api.js";
 import { chatReply, menuButtons, type Keyboard } from "./chat.js";
+import { chatCopy } from "./chat-content.js";
 export type SendMessage = (
   userId: string,
   text: string,
@@ -23,7 +24,6 @@ export type SendMessage = (
 ) => Promise<void>;
 export function maxSender(
   token: string,
-  username: string,
   apiUrl = "https://platform-api2.max.ru",
   transport = postMaxJson,
 ): SendMessage {
@@ -41,20 +41,7 @@ export function maxSender(
             {
               type: "inline_keyboard",
               payload: {
-                buttons: [
-                  ...(username
-                    ? [
-                        [
-                          {
-                            type: "link",
-                            text: "Открыть календарь",
-                            url: `https://max.ru/${username}?startapp`,
-                          },
-                        ],
-                      ]
-                    : []),
-                  ...buttons,
-                ],
+                buttons,
               },
             },
           ],
@@ -75,7 +62,7 @@ export function reminderText(
   milestone = false,
 ) {
   if (user.settings.privateMessages)
-    return `Вовремя: ${milestone ? "наступила важная дата" : "пришло время проверить срок события"} в вашем календаре.\n\nСледующие действия: откройте «Рекомендации», проверьте нужные документы и способ обращения. После выполнения отметьте событие завершённым.\nДетали скрыты вашей настройкой приватности. Посмотреть их: /show ${event.id.slice(0, 8)}.`;
+    return `Вовремя: ${milestone ? "наступила важная дата" : "пришло время проверить срок события"} в вашем календаре.\n\n${chatCopy.privateReminder}`;
   const template = templates.find((t) => t.id === event.templateId)!;
   return `Вовремя · ${event.title}\n${milestone ? "Наступила дата замены паспорта.\n" : ""}${event.dueDate < today ? "Срок прошёл" : event.dueDate === today ? "Срок сегодня" : "Срок"}: ${formatDate(event.dueDate)}\n\nЧто сделать:\n${nextSteps(
     { ...event, notes: event.notes.slice(0, 700) },
@@ -83,7 +70,7 @@ export function reminderText(
     .map((step, i) => `${i + 1}. ${step}`)
     .join(
       "\n",
-    )}${template.link ? `\n\nУслуга или ведомство: ${template.link}` : ""}${"source" in template ? `\nИсточник: ${template.source}` : ""}\n\nЗавершить: /done ${event.id.slice(0, 8)}`;
+    )}${template.link ? `\n\nУслуга или ведомство: ${template.link}` : ""}${"source" in template ? `\nИсточник: ${template.source}` : ""}\n\nИспользуйте кнопку «Выполнено», когда закончите.`;
 }
 export function dueReminders(event: Deadline, user: User, now: Date) {
   if (

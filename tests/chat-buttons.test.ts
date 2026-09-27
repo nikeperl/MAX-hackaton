@@ -45,6 +45,29 @@ test("every catalogue case validates, retains its sphere and uses a confirmed da
   );
 });
 
+test("first free-text message offers chat menu or MAX app, and visible replies contain no commands", () => {
+  const db = openDatabase(":memory:");
+  ensureUser(db, "42", "Тест");
+  const chat = (text: string, callback = false) =>
+    chatReply(db, getUser(db, "42")!, text, callback);
+  try {
+    const welcome = chat("Привет");
+    assert.match(welcome.text, /меню чата.*мини-приложение/);
+    assert.ok(welcome.buttons.flat().some((b) => b.text === "Добавить событие"));
+    const replies = [
+      welcome,
+      chat("help", true),
+      chat("settings", true),
+      chat("events:0", true),
+      chat("непонятно"),
+    ];
+    for (const answer of replies)
+      assert.doesNotMatch(answer.text, /\/(?:start|add|help|next|show|done|time|privacy|test|resume|pause)\b/i);
+  } finally {
+    db.close();
+  }
+});
+
 test("button journey creates a service, recommends steps, configures reminders and completes it", async () => {
   const db = openDatabase(":memory:");
   ensureUser(db, "42", "Тест");
