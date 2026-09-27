@@ -50,6 +50,7 @@ import { recognize } from "./recognize";
 import {
   categories,
   templates,
+  templateById,
   nextSteps,
   calculateDeadline,
   formatDate,
@@ -1268,15 +1269,7 @@ function EventCard({
         </span>
       </div>
       <h3>{event.title}</h3>
-      <p>
-        {event.templateId === "passport"
-          ? "Подайте заявление и подготовьте документы"
-          : event.templateId === "fluorography"
-            ? "Уточните дату обследования у врача"
-            : event.templateId === "tax"
-              ? "Проверьте начисления в личном кабинете"
-              : "Проверьте дату и подготовьтесь заранее"}
-      </p>
+      <p>{templateById[event.templateId].steps[0]}</p>
       <div className="upcoming-bottom">
         <span>
           <CalendarDays size={14} />

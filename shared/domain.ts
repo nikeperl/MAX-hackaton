@@ -1,6 +1,13 @@
 import { z } from "zod";
-import { additionalTemplates, categories, type Category } from "./services.js";
-export { categories, type Category };
+import {
+  categories,
+  templates,
+  templateById,
+  chatCopy,
+  type Category,
+  type TemplateId,
+} from "./content.js";
+export { categories, templates, templateById, type Category, type TemplateId };
 export function isDate(value: string) {
   return (
     /^\d{4}-\d{2}-\d{2}$/.test(value) &&
@@ -45,110 +52,11 @@ export function formatDate(date: string, short = false) {
     ...(short ? {} : { year: "numeric" }),
   });
 }
-export const templates = [
-  {
-    id: "passport",
-    title: "Замена паспорта РФ",
-    category: "documents",
-    description: "В 20 и 45 лет · расчёт по дате рождения",
-    dateLabel: "Дата рождения",
-    source:
-      "https://www.consultant.ru/document/cons_doc_LAW_466454/6125ca6a5baabbd3bbff7302f2c6e114b94061fa/",
-    sourceReviewedOn: "2026-09-25",
-    scope:
-      "РФ, общая замена по возрасту; особые обстоятельства уточняйте в МВД.",
-    rule: "20-й или 45-й день рождения + 90 календарных дней. Выберите нужную замену, включая уже просроченную.",
-    steps: [
-      "После дня рождения подайте заявление на замену паспорта через Госуслуги или уточните порядок в МВД / МФЦ.",
-      "Подготовьте паспорт и фотографии; актуальный список документов и пошлину проверьте перед обращением.",
-      "После получения нового паспорта отметьте событие выполненным.",
-    ],
-    link: "https://www.gosuslugi.ru/",
-  },
-  {
-    id: "fluorography",
-    title: "Флюорография",
-    category: "health",
-    description: "Следующее обследование по вашему интервалу",
-    dateLabel: "Дата последнего обследования",
-    source: "https://39.rospotrebnadzor.ru/node/19583",
-    sourceReviewedOn: "2026-09-25",
-    scope:
-      "Справочная информация регионального Роспотребнадзора; индивидуальный интервал определяет врач.",
-    rule: "Дата обследования + интервал, рекомендованный врачом. Единого «срока годности» для всех нет: периодичность зависит от возраста, региона и группы риска.",
-    steps: [
-      "Уточните у врача, когда вам показано следующее обследование.",
-      "Запишитесь в поликлинику, если врач рекомендует обследование.",
-      "После обследования добавьте новую дату и согласованный с врачом интервал.",
-    ],
-    link: "https://www.gosuslugi.ru/",
-  },
-  {
-    id: "tax",
-    title: "Имущественные налоги",
-    category: "payments",
-    description: "Транспорт, недвижимость и земля",
-    dateLabel: "Дата из налогового уведомления",
-    source: "https://www.nalog.gov.ru/nu/",
-    sourceReviewedOn: "2026-09-25",
-    scope:
-      "Уведомления за 2025 год; учитывайте региональные продления и свою дату.",
-    rule: "Для уведомлений за 2025 год общий срок — 1 декабря 2026 года. Льготы и продления могут менять срок: дата из вашего уведомления приоритетна.",
-    steps: [
-      "Проверьте начисления, льготы и срок в личном кабинете ФНС.",
-      "Оплатите по реквизитам налогового уведомления.",
-      "Убедитесь, что платёж учтён, и отметьте событие выполненным.",
-    ],
-    link: "https://lkfl2.nalog.ru/lkfl/",
-  },
-  {
-    id: "international",
-    title: "Загранпаспорт",
-    category: "documents",
-    description: "Срок действия из вашего документа",
-    dateLabel: "Действителен до",
-    rule: "Используем дату окончания из документа. Требования к оставшемуся сроку для поездки уточняйте у страны въезда.",
-    steps: [
-      "Проверьте срок действия в документе.",
-      "Если планируете поездку, проверьте требования страны въезда.",
-      "Заранее подайте заявление на новый паспорт.",
-    ],
-    link: "https://www.gosuslugi.ru/",
-  },
-  {
-    id: "insurance",
-    title: "Полис ОСАГО",
-    category: "transport",
-    description: "Напомним продлить полис",
-    dateLabel: "Дата окончания полиса",
-    rule: "Дата окончания берётся из действующего полиса.",
-    steps: [
-      "Проверьте период страхования в полисе.",
-      "Оформите новый полис до окончания действующего.",
-    ],
-    link: "",
-  },
-  ...additionalTemplates,
-  {
-    id: "custom",
-    title: "Своё событие",
-    category: "other",
-    description: "Любая важная дата и свои рекомендации",
-    dateLabel: "Крайний срок",
-    rule: "Срок и рекомендации задаются вами.",
-    steps: ["Проверьте условия и необходимые документы у поставщика услуги."],
-    link: "",
-  },
-] as const;
-export type TemplateId = (typeof templates)[number]["id"];
-export const templateById = Object.fromEntries(
-  templates.map((t) => [t.id, t]),
-) as Record<TemplateId, (typeof templates)[number]>;
 export function nextSteps(event: Pick<EventInput, "templateId" | "notes">) {
   const template = templateById[event.templateId];
   return [
     ...template.steps,
-    ...(event.notes ? [`Ваша заметка: ${event.notes}`] : []),
+    ...(event.notes ? [`${chatCopy.labels.note}${event.notes}`] : []),
   ];
 }
 export const eventInputSchema = z

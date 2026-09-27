@@ -6,7 +6,6 @@ import {
   saveSettings,
 } from "./db.js";
 import {
-  templates,
   formatDate,
   todayIn,
   addDays,
@@ -16,7 +15,7 @@ import {
 } from "../shared/domain.js";
 import { postMaxJson } from "./max-api.js";
 import { chatReply, menuButtons, type Keyboard } from "./chat.js";
-import { chatCopy } from "./chat-content.js";
+import { chatCopy, templateById } from "../shared/content.js";
 export type SendMessage = (
   userId: string,
   text: string,
@@ -61,16 +60,23 @@ export function reminderText(
   today: string,
   milestone = false,
 ) {
-  if (user.settings.privateMessages)
-    return `Вовремя: ${milestone ? "наступила важная дата" : "пришло время проверить срок события"} в вашем календаре.\n\n${chatCopy.privateReminder}`;
-  const template = templates.find((t) => t.id === event.templateId)!;
-  return `Вовремя · ${event.title}\n${milestone ? "Наступила дата замены паспорта.\n" : ""}${event.dueDate < today ? "Срок прошёл" : event.dueDate === today ? "Срок сегодня" : "Срок"}: ${formatDate(event.dueDate)}\n\nЧто сделать:\n${nextSteps(
-    { ...event, notes: event.notes.slice(0, 700) },
-  )
-    .map((step, i) => `${i + 1}. ${step}`)
-    .join(
-      "\n",
-    )}${template.link ? `\n\nУслуга или ведомство: ${template.link}` : ""}${"source" in template ? `\nИсточник: ${template.source}` : ""}\n\nИспользуйте кнопку «Выполнено», когда закончите.`;
+  if (user.settings.privateMessages) return chatCopy.privateReminder(milestone);
+  const template = templateById[event.templateId];
+  return chatCopy.reminder(
+    event.title,
+    formatDate(event.dueDate),
+    event.dueDate < today
+      ? "overdue"
+      : event.dueDate === today
+        ? "today"
+        : "future",
+    milestone,
+    nextSteps({ ...event, notes: event.notes.slice(0, 700) })
+      .map((step, i) => `${i + 1}. ${step}`)
+      .join("\n"),
+    template.link,
+    "source" in template ? template.source : "",
+  );
 }
 export function dueReminders(event: Deadline, user: User, now: Date) {
   if (
@@ -159,12 +165,12 @@ export async function processReminders(
               [
                 {
                   type: "callback",
-                  text: "Рекомендации",
+                  text: chatCopy.buttons.recommendations,
                   payload: `show:${event.id}`,
                 },
                 {
                   type: "callback",
-                  text: "Выполнено",
+                  text: chatCopy.buttons.completed,
                   payload: `done:${event.id}`,
                 },
               ],
@@ -247,10 +253,9 @@ export async function processInbox(
       ensureUser(
         db,
         id,
-        String(source.first_name || source.name || "Пользователь").slice(
-          0,
-          100,
-        ),
+        String(
+          source.first_name || source.name || chatCopy.defaultUserName,
+        ).slice(0, 100),
       );
       db.prepare("UPDATE users SET bot_started=1 WHERE id=?").run(id);
       const user = getUser(db, id)!;

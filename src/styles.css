@@ -1043,6 +1043,10 @@ i.education {
   font-size: 9px;
   line-height: 1.6;
   color: #657493;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .upcoming-bottom {
   display: flex;

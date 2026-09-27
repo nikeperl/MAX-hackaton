@@ -100,7 +100,7 @@ export function seedDemo(db: DB, id: string) {
   const samples: EventInput[] = [
     {
       templateId: "passport",
-      title: "Замена паспорта РФ",
+      title: templateById.passport.title,
       category: "documents",
       baseDate: addMonths(addDays(t, -85), -240),
       age: 20,
@@ -110,7 +110,7 @@ export function seedDemo(db: DB, id: string) {
     },
     {
       templateId: "fluorography",
-      title: "Флюорография",
+      title: templateById.fluorography.title,
       category: "health",
       baseDate: addMonths(addDays(t, 12), -12),
       intervalMonths: 12,
@@ -120,7 +120,7 @@ export function seedDemo(db: DB, id: string) {
     },
     {
       templateId: "tax",
-      title: "Имущественные налоги",
+      title: templateById.tax.title,
       category: "payments",
       baseDate: `${t.slice(0, 4)}-12-01`,
       reminders: [30, 7, 1, 0],
@@ -129,7 +129,7 @@ export function seedDemo(db: DB, id: string) {
     },
     {
       templateId: "insurance",
-      title: "Продление ОСАГО",
+      title: templateById.insurance.title,
       category: "documents",
       baseDate: addDays(t, 22),
       reminders: [30, 7, 1, 0],

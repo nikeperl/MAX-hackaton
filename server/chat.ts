@@ -20,7 +20,7 @@ import {
   type DB,
 } from "./db.js";
 import { commandReply } from "./commands.js";
-import { chatCopy } from "./chat-content.js";
+import { chatCopy } from "../shared/content.js";
 
 export type BotButton =
   | { type: "callback"; text: string; payload: string }
@@ -33,11 +33,17 @@ const button = (text: string, payload: string): BotButton => ({
   payload,
 });
 export const menuButtons: Keyboard = [
-  [button("Добавить событие", "catalog"), button("Мои события", "events:0")],
-  [button("Настройки", "settings"), button("Помощь", "help")],
+  [
+    button(chatCopy.buttons.addEvent, "catalog"),
+    button(chatCopy.buttons.myEvents, "events:0"),
+  ],
+  [
+    button(chatCopy.buttons.settings, "settings"),
+    button(chatCopy.buttons.help, "help"),
+  ],
 ];
-const back: Keyboard = [[button("Главное меню", "menu")]];
-const cancel: Keyboard = [[button("Отменить", "menu")]];
+const back: Keyboard = [[button(chatCopy.buttons.mainMenu, "menu")]];
+const cancel: Keyboard = [[button(chatCopy.buttons.cancel, "menu")]];
 const reply = (text: string, buttons: Keyboard = menuButtons): ChatReply => ({
   text,
   buttons,
@@ -78,33 +84,28 @@ function draftInput(draft: Draft) {
 function prompt(db: DB, user: User, draft: Draft): ChatReply {
   saveDraft(db, user.id, draft);
   const t = templateById[draft.templateId];
-  if (draft.stage === "title")
-    return reply(
-      "Как назвать событие? Напишите название (до 120 символов).",
-      cancel,
-    );
+  if (draft.stage === "title") return reply(chatCopy.prompts.title, cancel);
   if (draft.stage === "date")
-    return reply(
-      `${t.title}\n${t.dateLabel}: отправьте дату ДД.ММ.ГГГГ.\n\n${t.rule}\n\nНомера документов не нужны.`,
-      cancel,
-    );
+    return reply(chatCopy.prompts.date(t.title, t.dateLabel, t.rule), cancel);
   if (draft.stage === "age")
-    return reply("К какому возрасту нужна замена паспорта?", [
+    return reply(chatCopy.prompts.age, [
       [
-        button("20 лет", `age:${draft.nonce}:20`),
-        button("45 лет", `age:${draft.nonce}:45`),
+        button(chatCopy.buttons.age20, `age:${draft.nonce}:20`),
+        button(chatCopy.buttons.age45, `age:${draft.nonce}:45`),
       ],
       ...cancel,
     ]);
   if (draft.stage === "interval")
-    return reply(
-      "Введите интервал, рекомендованный врачом, в месяцах (1–120).",
-      cancel,
-    );
+    return reply(chatCopy.prompts.interval, cancel);
   const input = draftInput(draft);
   return reply(
-    `${draft.title}\nСрок: ${formatDate(calculateDeadline(input).dueDate)}\nСфера: ${categories[input.category]}\nНапомним за 30, 7, 1 день и в день срока.\nНапоминания сейчас ${user.settings.enabled ? "включены" : "выключены — включите их в настройках"}.\n\nДобавить событие?`,
-    [[button("Добавить", `save:${draft.nonce}`)], ...cancel],
+    chatCopy.prompts.confirmation(
+      draft.title,
+      formatDate(calculateDeadline(input).dueDate),
+      categories[input.category],
+      user.settings.enabled,
+    ),
+    [[button(chatCopy.buttons.add, `save:${draft.nonce}`)], ...cancel],
   );
 }
 
@@ -121,42 +122,44 @@ export function chatReply(
     if (!["new", "age", "save"].includes(action)) clearDraft(db, user.id);
     if (action === "menu") {
       clearDraft(db, user.id);
-      return reply(
-        "Вовремя — сроки и следующие действия. Выберите, что сделать.",
-      );
+      return reply(chatCopy.messages.menu);
     }
     if (action === "help") return reply(chatCopy.help);
     if (action === "catalog") {
       clearDraft(db, user.id);
       if (!arg)
-        return reply("В какой сфере нужно напоминание?", [
+        return reply(chatCopy.prompts.category, [
           ...Object.entries(categories).map(([id, name]) => [
             button(name, `catalog:${id}:0`),
           ]),
           ...back,
         ]);
       if (!Object.hasOwn(categories, arg))
-        return reply("Сфера не найдена. Откройте каталог заново.");
+        return reply(chatCopy.messages.categoryMissing);
       const page = Number(extra || 0);
       if (!Number.isInteger(page) || page < 0)
-        return reply("Откройте каталог заново.");
+        return reply(chatCopy.messages.catalogReset);
       const items = templates.filter((t) => t.category === arg);
       const buttons: Keyboard = items
         .slice(page * 6, page * 6 + 6)
         .map((t) => [button(t.title.slice(0, 100), `new:${t.id}`)]);
       if (page > 0)
-        buttons.push([button("Назад", `catalog:${arg}:${page - 1}`)]);
+        buttons.push([
+          button(chatCopy.buttons.previous, `catalog:${arg}:${page - 1}`),
+        ]);
       if (items.length > (page + 1) * 6)
-        buttons.push([button("Далее", `catalog:${arg}:${page + 1}`)]);
+        buttons.push([
+          button(chatCopy.buttons.next, `catalog:${arg}:${page + 1}`),
+        ]);
       return reply(categories[arg as Category], [
         ...buttons,
-        [button("Все сферы", "catalog")],
+        [button(chatCopy.buttons.allCategories, "catalog")],
         ...back,
       ]);
     }
     if (action === "new") {
       const t = templates.find((t) => t.id === arg);
-      if (!t) return reply("Услуга не найдена. Откройте каталог заново.");
+      if (!t) return reply(chatCopy.messages.serviceMissing);
       return prompt(db, user, {
         nonce: randomUUID(),
         templateId: t.id,
@@ -167,9 +170,7 @@ export function chatReply(
     if (action === "age" || action === "save") {
       const draft = readDraft(db, user.id);
       if (!draft || draft.nonce !== arg)
-        return reply(
-          "Эта форма уже закрыта или устарела. Начните добавление заново.",
-        );
+        return reply(chatCopy.messages.formExpired);
       if (
         action === "age" &&
         draft.stage === "age" &&
@@ -182,28 +183,30 @@ export function chatReply(
         });
       if (action === "save" && draft.stage === "confirm") {
         if (listEvents(db, user.id).length >= 500)
-          return reply(
-            "Можно хранить до 500 событий. Удалите ненужные в календаре.",
-          );
+          return reply(chatCopy.messages.eventLimit);
         const event = createEvent(db, user.id, draftInput(draft));
         clearDraft(db, user.id);
         return reply(
-          `Добавлено: ${event.title}\nСрок: ${formatDate(event.dueDate)}\n${user.settings.enabled ? "Напоминания включены." : "Включите напоминания в настройках, чтобы получать сообщения о сроках."}`,
+          chatCopy.messages.eventSaved(
+            event.title,
+            formatDate(event.dueDate),
+            user.settings.enabled,
+          ),
           [
             [
-              button("Рекомендации", `show:${event.id}`),
-              button("Настройки", "settings"),
+              button(chatCopy.buttons.recommendations, `show:${event.id}`),
+              button(chatCopy.buttons.settings, "settings"),
             ],
             ...menuButtons,
           ],
         );
       }
-      return reply("Сначала завершите текущий шаг формы.", cancel);
+      return reply(chatCopy.messages.finishStep, cancel);
     }
     if (action === "events") {
       const page = Number(arg || 0);
       if (!Number.isInteger(page) || page < 0)
-        return reply("Откройте список заново.");
+        return reply(chatCopy.messages.eventsReset);
       const events = listEvents(db, user.id).filter((e) => !e.completed);
       const items = events.slice(page * 5, page * 5 + 5);
       const buttons: Keyboard = items.map((e) => [
@@ -212,26 +215,28 @@ export function chatReply(
           `show:${e.id}`,
         ),
       ]);
-      if (page > 0) buttons.push([button("Назад", `events:${page - 1}`)]);
+      if (page > 0)
+        buttons.push([button(chatCopy.buttons.previous, `events:${page - 1}`)]);
       if (events.length > (page + 1) * 5)
-        buttons.push([button("Далее", `events:${page + 1}`)]);
+        buttons.push([button(chatCopy.buttons.next, `events:${page + 1}`)]);
       return reply(
-        items.length
-          ? "Выберите событие, чтобы увидеть рекомендации или завершить его."
-          : "На этой странице нет событий.",
+        items.length ? chatCopy.prompts.events : chatCopy.messages.eventsEmpty,
         [...buttons, ...menuButtons],
       );
     }
     if (action === "show" || action === "done") {
       const event = listEvents(db, user.id).find((e) => e.id === arg);
-      if (!event) return reply("Событие не найдено.");
+      if (!event) return reply(chatCopy.messages.eventMissing);
       const result = commandReply(db, user, `/${action} ${event.id}`);
       return reply(
         result,
         action === "show" && !event.completed
-          ? [[button("Выполнено", `done:${event.id}`)], ...menuButtons]
+          ? [
+              [button(chatCopy.buttons.completed, `done:${event.id}`)],
+              ...menuButtons,
+            ]
           : [
-              [button("Добавить следующую дату", `new:${event.templateId}`)],
+              [button(chatCopy.buttons.nextDate, `new:${event.templateId}`)],
               ...menuButtons,
             ],
       );
@@ -239,7 +244,7 @@ export function chatReply(
     if (action === "settings" || action === "enabled" || action === "privacy") {
       if (action !== "settings") {
         if (!["on", "off"].includes(arg))
-          return reply("Некорректная настройка.");
+          return reply(chatCopy.messages.invalidSetting);
         saveSettings(db, user.id, {
           ...user.settings,
           ...(action === "enabled"
@@ -252,35 +257,37 @@ export function chatReply(
         [
           button(
             user.settings.enabled
-              ? "Выключить напоминания"
-              : "Включить напоминания",
+              ? chatCopy.buttons.disableReminders
+              : chatCopy.buttons.enableReminders,
             `enabled:${user.settings.enabled ? "off" : "on"}`,
           ),
         ],
         [
           button(
             user.settings.privateMessages
-              ? "Показывать рекомендации"
-              : "Скрывать детали",
+              ? chatCopy.buttons.showRecommendations
+              : chatCopy.buttons.hideDetails,
             `privacy:${user.settings.privateMessages ? "off" : "on"}`,
           ),
         ],
-        [button("Время уведомлений", "hours"), button("Часовой пояс", "zones")],
-        [button("Тестовое уведомление", "test")],
+        [
+          button(chatCopy.buttons.notificationTime, "hours"),
+          button(chatCopy.buttons.timezone, "zones"),
+        ],
+        [button(chatCopy.buttons.testNotification, "test")],
         ...back,
       ]);
     }
     if (action === "hours")
-      return reply("Выберите местный час отправки.", [
-        [8, 9, 12, 18, 20].map((hour) => button(`${hour}:00`, `hour:${hour}`)),
+      return reply(chatCopy.prompts.localHour, [
+        chatCopy.hours.map((hour) => button(`${hour}:00`, `hour:${hour}`)),
         ...back,
       ]);
     if (action === "zones")
-      return reply("Выберите часовой пояс.", [
-        [button("Москва", "zone:Europe/Moscow")],
-        [button("Екатеринбург", "zone:Asia/Yekaterinburg")],
-        [button("Новосибирск", "zone:Asia/Novosibirsk")],
-        [button("Владивосток", "zone:Asia/Vladivostok")],
+      return reply(chatCopy.prompts.timezone, [
+        ...chatCopy.timezones.map((zone) => [
+          button(zone.title, `zone:${zone.value}`),
+        ]),
         ...back,
       ]);
     if (action === "hour" || action === "zone") {
@@ -289,18 +296,21 @@ export function chatReply(
         user,
         `/time ${action === "hour" ? arg : user.settings.hour} ${action === "zone" ? arg : user.settings.timezone}`,
       );
-      return reply(result, [[button("Настройки", "settings")], ...back]);
+      return reply(result, [
+        [button(chatCopy.buttons.settings, "settings")],
+        ...back,
+      ]);
     }
     if (action === "test") return reply(commandReply(db, user, "/test"));
-    return reply("Кнопка устарела. Откройте главное меню.");
+    return reply(chatCopy.messages.staleButton);
   }
-  if (text === "/start" || text.toLowerCase() === "меню") {
+  if (text === "/start" || text.toLowerCase() === chatCopy.input.menu) {
     clearDraft(db, user.id);
     return reply(chatCopy.welcome);
   }
-  if (text === "/cancel" || text.toLowerCase() === "отмена") {
+  if (text === "/cancel" || text.toLowerCase() === chatCopy.input.cancel) {
     clearDraft(db, user.id);
-    return reply("Добавление отменено.");
+    return reply(chatCopy.messages.cancelled);
   }
   if (text.startsWith("/")) {
     clearDraft(db, user.id);
@@ -310,24 +320,17 @@ export function chatReply(
   if (draft) {
     if (draft.stage === "title") {
       if (!text || text.length > 120)
-        return reply("Название должно содержать от 1 до 120 символов.", cancel);
+        return reply(chatCopy.messages.invalidTitle, cancel);
       return prompt(db, user, { ...draft, title: text, stage: "date" });
     }
     if (draft.stage === "date") {
       const date = text.replace(/^(\d{2})\.(\d{2})\.(\d{4})$/, "$3-$2-$1");
-      if (!isDate(date))
-        return reply(
-          "Нужна существующая дата ДД.ММ.ГГГГ, например 01.12.2026.",
-          cancel,
-        );
+      if (!isDate(date)) return reply(chatCopy.messages.invalidDate, cancel);
       if (
         ["passport", "fluorography"].includes(draft.templateId) &&
         date > todayIn(user.settings.timezone)
       )
-        return reply(
-          "Дата рождения или прошлого обследования не может быть в будущем.",
-          cancel,
-        );
+        return reply(chatCopy.messages.futureDate, cancel);
       return prompt(db, user, {
         ...draft,
         baseDate: date,
@@ -342,10 +345,7 @@ export function chatReply(
     if (draft.stage === "interval") {
       const months = Number(text);
       if (!/^\d+$/.test(text) || months < 1 || months > 120)
-        return reply(
-          "Введите целое число месяцев от 1 до 120 по рекомендации врача.",
-          cancel,
-        );
+        return reply(chatCopy.messages.invalidInterval, cancel);
       return prompt(db, user, {
         ...draft,
         intervalMonths: months,
