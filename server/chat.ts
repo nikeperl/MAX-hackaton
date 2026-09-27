@@ -326,18 +326,16 @@ export function chatReply(
     if (draft.stage === "date") {
       const date = text.replace(/^(\d{2})\.(\d{2})\.(\d{4})$/, "$3-$2-$1");
       if (!isDate(date)) return reply(chatCopy.messages.invalidDate, cancel);
-      if (
-        ["passport", "fluorography"].includes(draft.templateId) &&
-        date > todayIn(user.settings.timezone)
-      )
+      const calculation = templateById[draft.templateId].calculation;
+      if (calculation !== "date" && date > todayIn(user.settings.timezone))
         return reply(chatCopy.messages.futureDate, cancel);
       return prompt(db, user, {
         ...draft,
         baseDate: date,
         stage:
-          draft.templateId === "passport"
+          calculation === "passport"
             ? "age"
-            : draft.templateId === "fluorography"
+            : calculation === "interval"
               ? "interval"
               : "confirm",
       });

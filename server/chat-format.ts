@@ -27,8 +27,8 @@ export function eventDetails(event: Deadline) {
     nextSteps({ ...event, notes: event.notes.slice(0, 1000) })
       .map((step, i) => `${i + 1}. ${step}`)
       .join("\n"),
-    "scope" in template ? template.scope : "",
-    "source" in template ? template.source : "",
+    template.scope,
+    template.source,
     template.link,
   );
 }

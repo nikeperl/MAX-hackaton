@@ -95,12 +95,13 @@ export function calculateDeadline(input: EventInput): {
   dueDate: string;
   milestoneDate?: string;
 } {
-  if (input.templateId === "passport") {
+  const calculation = templateById[input.templateId].calculation;
+  if (calculation === "passport") {
     if (!input.age) throw new Error("Выберите замену в 20 или 45 лет");
     const milestoneDate = addMonths(input.baseDate, input.age * 12);
     return { milestoneDate, dueDate: addDays(milestoneDate, 90) };
   }
-  if (input.templateId === "fluorography") {
+  if (calculation === "interval") {
     if (!input.intervalMonths)
       throw new Error("Укажите интервал, рекомендованный врачом");
     return { dueDate: addMonths(input.baseDate, input.intervalMonths) };

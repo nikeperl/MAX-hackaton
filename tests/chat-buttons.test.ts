@@ -19,7 +19,10 @@ function payload(reply: ChatReply, label: string) {
 test("every catalogue case validates, retains its sphere and uses a confirmed date", () => {
   assert.equal(templates.length, 46);
   assert.equal(new Set(templates.map((t) => t.id)).size, templates.length);
+  const fields = Object.keys(templates[0]).sort();
   for (const t of templates) {
+    assert.deepEqual(Object.keys(t).sort(), fields);
+    assert.ok(["date", "passport", "interval"].includes(t.calculation));
     assert.ok(t.category in categories);
     assert.ok(t.steps.length >= 1);
     const input = eventInputSchema.parse({
@@ -53,7 +56,9 @@ test("first free-text message offers chat menu or MAX app, and visible replies c
   try {
     const welcome = chat("Привет");
     assert.match(welcome.text, /меню чата.*мини-приложение/);
-    assert.ok(welcome.buttons.flat().some((b) => b.text === "Добавить событие"));
+    assert.ok(
+      welcome.buttons.flat().some((b) => b.text === "Добавить событие"),
+    );
     const replies = [
       welcome,
       chat("help", true),
@@ -62,7 +67,10 @@ test("first free-text message offers chat menu or MAX app, and visible replies c
       chat("непонятно"),
     ];
     for (const answer of replies)
-      assert.doesNotMatch(answer.text, /\/(?:start|add|help|next|show|done|time|privacy|test|resume|pause)\b/i);
+      assert.doesNotMatch(
+        answer.text,
+        /\/(?:start|add|help|next|show|done|time|privacy|test|resume|pause)\b/i,
+      );
   } finally {
     db.close();
   }

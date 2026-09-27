@@ -75,7 +75,7 @@ export function reminderText(
       .map((step, i) => `${i + 1}. ${step}`)
       .join("\n"),
     template.link,
-    "source" in template ? template.source : "",
+    template.source,
   );
 }
 export function dueReminders(event: Deadline, user: User, now: Date) {

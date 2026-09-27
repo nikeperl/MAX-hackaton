@@ -1393,10 +1393,10 @@ function EventDetails({ event, today }: { event: Deadline; today: string }) {
               .join(", ")
           : "не напоминать"}
       </p>
-      {event.templateId === "passport" && (
+      {t.calculation === "passport" && (
         <p className="muted">Дополнительно — в день 20-летия или 45-летия.</p>
       )}
-      {"scope" in t && <p className="muted">{t.scope}</p>}
+      {t.scope && <p className="muted">{t.scope}</p>}
       <div className="source-links">
         {t.link && (
           <a href={t.link} target="_blank" rel="noreferrer">
@@ -1404,10 +1404,10 @@ function EventDetails({ event, today }: { event: Deadline; today: string }) {
             <ExternalLink size={14} />
           </a>
         )}
-        {"source" in t && (
+        {t.source && (
           <a href={t.source} target="_blank" rel="noreferrer">
             Источник правила
-            {"sourceReviewedOn" in t
+            {t.sourceReviewedOn
               ? ` · проверен ${formatDate(t.sourceReviewedOn)}`
               : ""}
             <ExternalLink size={14} />
@@ -1502,8 +1502,8 @@ function EventEditor({
         title,
         category: t.id === "custom" ? category : t.category,
         baseDate: date,
-        ...(t.id === "passport" ? { age } : {}),
-        ...(t.id === "fluorography"
+        ...(t.calculation === "passport" ? { age } : {}),
+        ...(t.calculation === "interval"
           ? { intervalMonths: Number(interval) }
           : {}),
         reminders,
@@ -1629,7 +1629,7 @@ function EventEditor({
                 max="2100-12-31"
               />
             </label>
-            {selected === "passport" && (
+            {t?.calculation === "passport" && (
               <label className="field">
                 Возраст замены
                 <select
@@ -1641,7 +1641,7 @@ function EventEditor({
                 </select>
               </label>
             )}
-            {selected === "fluorography" && (
+            {t?.calculation === "interval" && (
               <label className="field">
                 Интервал врача
                 <select
@@ -1676,13 +1676,13 @@ function EventEditor({
             <Info size={17} />
             <p>{t?.rule}</p>
           </div>
-          {t && "scope" in t && <p className="muted">{t.scope}</p>}
+          {t?.scope && <p className="muted">{t.scope}</p>}
           {calculated && (
             <div className="calculated">
               <Sparkles size={18} />
               <div>
                 <span>
-                  {selected === "passport" || selected === "fluorography"
+                  {t?.calculation !== "date"
                     ? "Рассчитанный срок"
                     : "Дата в календаре"}
                 </span>
