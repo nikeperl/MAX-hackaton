@@ -1,118 +1,194 @@
-# Project check schema v1; the brief does not define an evaluation schema.
-# The evaluator supplies base_url/token/event_id; this file is not a test runner.
+# Project-defined schema version. The evaluation brief does not specify a platform schema.
 schema_version: "1.0"
 solution: "Вовремя"
 base_url: "https://84.237.53.134/api"
-local_demo_url: "http://localhost:3002/api"
-public_endpoint_verified: true
-public_endpoint_checked_on: "2026-09-28"
-authentication:
-  role: user
-  production: "POST /session с действующими подписанными initData из MAX; пароль не используется"
-  local_demo: "POST /session с {}; сохранить ответ token; отдельная синтетическая учётная запись на каждый вход"
-  headers:
-    Authorization: "Bearer ${token}"
-    Content-Type: application/json
+
+# A MAX test user supplies signed initData; /session returns the bearer token.
+# The event ID is captured from /events and reused in subsequent checks.
 test_data: tests/fixtures/events.json
+
 checks:
   - id: health
+    required: false
     role: anonymous
     method: GET
     path: /health
-    parameters: {}
+    parameters:
+      query: {}
+      path: {}
+      headers: {}
+      body: null
     expected:
       status: [200]
       content_type: application/json
-      required_fields: [ok]
-      values: { ok: true }
+      json_schema:
+        type: object
+        required: [ok]
+        properties:
+          ok: { type: boolean, const: true }
+
   - id: session
-    role: anonymous
+    required: true
+    role: user
     method: POST
     path: /session
     parameters:
+      query: {}
+      path: {}
+      headers: { Content-Type: application/json }
       body: { initData: "${max_init_data}" }
     expected:
       status: [200]
       content_type: application/json
-      required_fields: [token, user]
+      json_schema:
+        type: object
+        required: [token, user]
+        properties:
+          token: { type: string }
+          user: { type: object }
+      capture: { token: token }
+
   - id: create
+    required: true
     role: user
     method: POST
     path: /events
     parameters:
-      headers: { Authorization: "Bearer ${token}" }
+      query: {}
+      path: {}
+      headers:
+        Authorization: "Bearer ${token}"
+        Content-Type: application/json
       body:
-        {
-          templateId: passport,
-          title: "Тест: замена паспорта",
-          category: documents,
-          baseDate: "2006-10-20",
-          age: 20,
-          reminders: [30, 7, 1, 0],
-        }
+        templateId: passport
+        title: "Тест: замена паспорта"
+        category: documents
+        baseDate: "2006-10-20"
+        age: 20
+        reminders: [30, 7, 1, 0]
     expected:
       status: [201]
       content_type: application/json
-      required_fields: [id, dueDate, milestoneDate, completed]
+      json_schema:
+        type: object
+        required: [id, dueDate, milestoneDate, completed]
+        properties:
+          id: { type: string, format: uuid }
+          dueDate: { type: string, format: date }
+          milestoneDate: { type: string, format: date }
+          completed: { type: boolean }
       values:
-        { dueDate: "2027-01-18", milestoneDate: "2026-10-20", completed: false }
+        dueDate: "2027-01-18"
+        milestoneDate: "2026-10-20"
+        completed: false
       capture: { event_id: id }
+
   - id: list
+    required: true
     role: user
     method: GET
     path: /events
     parameters:
+      query: {}
+      path: {}
       headers: { Authorization: "Bearer ${token}" }
+      body: null
     expected:
       status: [200]
       content_type: application/json
-      type: array
-      item_required_fields: [id, title, dueDate, completed]
+      json_schema:
+        type: array
+        items:
+          type: object
+          required: [id, title, dueDate, completed]
+          properties:
+            id: { type: string, format: uuid }
+            title: { type: string }
+            dueDate: { type: string, format: date }
+            completed: { type: boolean }
+
   - id: settings
+    required: true
     role: user
     method: PUT
     path: /settings
     parameters:
-      headers: { Authorization: "Bearer ${token}" }
+      query: {}
+      path: {}
+      headers:
+        Authorization: "Bearer ${token}"
+        Content-Type: application/json
       body:
-        {
-          enabled: true,
-          hour: 9,
-          minute: 37,
-          timezone: Asia/Novosibirsk,
-          privateMessages: true,
-        }
+        enabled: true
+        hour: 9
+        minute: 37
+        timezone: Asia/Novosibirsk
+        privateMessages: true
     expected:
       status: [200]
       content_type: application/json
-      required_fields: [enabled, hour, minute, timezone, privateMessages]
+      json_schema:
+        type: object
+        required: [enabled, hour, minute, timezone, privateMessages]
+        properties:
+          enabled: { type: boolean }
+          hour: { type: integer }
+          minute: { type: integer }
+          timezone: { type: string }
+          privateMessages: { type: boolean }
+
   - id: complete
+    required: true
     role: user
     method: PATCH
     path: /events/${event_id}
     parameters:
-      headers: { Authorization: "Bearer ${token}" }
+      query: {}
+      path: { event_id: "${event_id}" }
+      headers:
+        Authorization: "Bearer ${token}"
+        Content-Type: application/json
       body: { completed: true }
     expected:
       status: [200]
       content_type: application/json
-      required_fields: [id, completed]
-      values: { completed: true }
+      json_schema:
+        type: object
+        required: [id, completed]
+        properties:
+          id: { type: string, format: uuid }
+          completed: { type: boolean, const: true }
+
   - id: delete
+    required: true
     role: user
     method: DELETE
     path: /events/${event_id}
     parameters:
+      query: {}
+      path: { event_id: "${event_id}" }
       headers: { Authorization: "Bearer ${token}" }
+      body: null
     expected:
       status: [204]
-      body: null
+      content_type: null
+      json_schema: null
+
   - id: unauthorized
+    required: false
     role: anonymous
     method: GET
     path: /events
-    parameters: {}
+    parameters:
+      query: {}
+      path: {}
+      headers: {}
+      body: null
     expected:
       status: [401]
       content_type: application/json
-      required_fields: [error]
+      json_schema:
+        type: object
+        required: [error]
+        properties:
+          error: { type: string }
