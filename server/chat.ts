@@ -204,10 +204,7 @@ export function chatReply(
             user.settings.enabled,
           ),
           [
-            [
-              button(chatCopy.buttons.recommendations, `show:${event.id}`),
-              button(chatCopy.buttons.settings, "settings"),
-            ],
+            [button(chatCopy.buttons.recommendations, `show:${event.id}`)],
             ...menuButtons,
           ],
         );
