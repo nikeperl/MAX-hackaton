@@ -27,7 +27,7 @@ p + p { margin-top: 14px; }
 .accent .muted { color: #e3eeff; }
 .pill { display: inline-block; border-radius: 16px; padding: 8px 15px; background: #eef3ff; color: #0756f5; font-size: 16px; font-weight: 700; }
 .footer { position: absolute; bottom: 28px; left: 64px; right: 64px; display: flex; justify-content: space-between; font-size: 14px; color: #657493; }
-.logo { display: inline-flex; width: 66px; height: 66px; align-items: center; justify-content: center; border-radius: 23px; background: linear-gradient(135deg,#26a9f4,#0756f5 52%,#6825f4); color: white; box-shadow: 0 8px 24px #0756f533; font-size: 42px; margin-bottom: 28px; }
+.logo { display: block; width: 66px; height: 66px; object-fit: contain; border-radius: 23px; box-shadow: 0 8px 24px #0756f533; margin-bottom: 28px; }
 a { color: #0756f5; text-decoration: underline; text-underline-offset: 3px; }
 code { font-family: Consolas, monospace; font-size: .85em; overflow-wrap: anywhere; }
 .spaced { margin-top: 24px; }
@@ -41,6 +41,9 @@ code { font-family: Consolas, monospace; font-size: .85em; overflow-wrap: anywhe
 .technical h2 { margin: 8px 0 20px; }
 .technical .card { padding: 22px; font-size: 17px; }
 .technical p + p { margin-top: 10px; }
+.access-settings { font-size: 11px; line-height: 1.3; margin-top: 10px; }
+.access-settings p + p { margin-top: 5px; }
+.access-settings code { font-size: 11px; }
 .roadmap h2 { font-size: 38px; margin-bottom: 20px; }
 .roadmap .row { padding: 12px 0; font-size: 18px; }
 .roadmap .spaced { margin-top: 16px; }
@@ -49,34 +52,34 @@ code { font-family: Consolas, monospace; font-size: .85em; overflow-wrap: anywhe
 </head>
 <body>
 <section class="slide technical">
-  <div class="eyebrow">Служебный слайд · техническая проверка · 25.09.2026</div>
+  <div class="eyebrow">Служебный слайд · техническая проверка · 28.09.2026</div>
   <h2>Доступ и воспроизведение</h2>
   <div class="grid">
     <div class="card">
-      <p><b>Бот MAX:</b> [вставить подтверждённую ссылку]. В текущей конфигурации стоит отображаемое имя «Вовремя».</p>
+      <p><b>Бот MAX:</b> <a href="https://max.ru/se14448730_bot">max.ru/se14448730_bot</a></p>
       <p><b>Репозиторий:</b> <a href="https://github.com/nikeperl/MAX-hackaton">github.com/nikeperl/MAX-hackaton</a></p>
-      <p><b>Коммит исходного кода:</b><br><code>6550b9273d8f3844f3856b4f992f508b0774b395</code></p>
-      <p><b>Собственный API:</b> <code>https://84.237.53.134/api</code><br>Адрес из конфигурации; внешняя доступность ещё не подтверждена.</p>
-      <p><b>Локально:</b><br><code>docker compose -f compose.demo.yaml up -d --build</code><br><code>http://localhost:3002</code></p>
+      <p><b>Версия исходного кода:</b><br><code data-code-version>Фиксируется при экспорте PDF</code></p>
+      <p><b>Собственный API:</b> <code>https://84.237.53.134/api</code><br>HTTPS, MAX API и webhook проверены 28.09.2026.</p>
+      <p><b>Локально:</b><br><code>docker compose -f compose.demo.yaml up -d --build --wait</code><br><code>http://localhost:3002</code></p>
     </div>
     <div class="card">
-      <p><b>Проверка в MAX:</b> /start → /passport 20.10.2006 20 → /time 9 Asia/Novosibirsk → /resume → /show код → /done код.</p>
+      <p><b>Проверка в MAX:</b> «Добавить событие» → «Личные документы» → паспорт → 20.10.2006 → 20 лет → «Добавить» → настройки напоминаний → «Рекомендации» → «Выполнено».</p>
       <p><b>Учётные записи:</b> свой MAX-профиль; логин/пароль приложения не требуются. В Docker-демо создаётся отдельный гостевой профиль.</p>
-      <p><b>Закрытый комплект доступа:</b> MAX_BOT_TOKEN, MAX_WEBHOOK_SECRET, MAX_BOT_USERNAME, APP_URL. Рабочие значения передаются организаторам отдельно, не в Git.</p>
+      <div data-private-access><p><b>Параметры проверки:</b> MAX_BOT_TOKEN, MAX_WEBHOOK_SECRET, MAX_BOT_USERNAME, APP_URL. Значения доступны в закрытом экземпляре технического слайда.</p></div>
       <p><b>API-контракт:</b> openapi.json, DATA-API.yaml.<br><b>Примеры:</b> tests/fixtures/events.json.</p>
     </div>
   </div>
-  <p class="warning spaced">Черновик для сдачи: заполнить ссылку, команду и закрытый комплект доступа; подтвердить живой сценарий в MAX.</p>
+  <p class="small muted spaced">Тестовый профиль приложения не требует пароля: вход через MAX или отдельная гостевая сессия Docker-демо. Тестовые данные синтетические.</p>
   <div class="footer"><span>Вовремя · трек «Забота о людях»</span><span>01 / 10</span></div>
 </section>
 <section class="slide">
-  <div class="logo">✓</div>
+  <img class="logo" src="../public/logo.png" alt="Вовремя">
   <div class="eyebrow">Забота о людях · MVP в MAX</div>
   <h1 style="margin:20px 0 24px">Важные сроки.<br>Меньше забот.</h1>
   <p style="max-width:850px;font-size:28px">Вовремя сохраняет дату, напоминает в чате<br>и помогает понять следующий шаг к услуге.</p>
   <div class="spaced"><span class="pill">Чат-бот + мини-приложение</span></div>
-  <p class="small muted spaced">Команда: [название и участники — заполнить перед сдачей]</p>
-  <div class="footer"><span>Вовремя · исполнительное резюме</span><span>02 / 10</span></div>
+  <p class="small muted spaced">«Роналду ИИР»: Никита Зеленков — UX/UI; Михаил Кошкин — backend; Алина Каримова — frontend.</p>
+  <div class="footer"><span>Вовремя · продукт и команда</span><span>02 / 10</span></div>
 </section>
 <section class="slide">
   <div class="eyebrow">Один приоритетный пользователь</div>
@@ -92,33 +95,34 @@ code { font-family: Consolas, monospace; font-size: .85em; overflow-wrap: anywhe
   <div class="eyebrow">Сценарий целиком в чате</div>
   <h2>От даты до понятного действия</h2>
   <div class="flow">
-    <div class="card"><div class="number">01</div><h3>Создать</h3><code>/passport<br>20.10.2006 20</code><p class="spaced">Расчёт: 18.01.2027</p></div>
+    <div class="card"><div class="number">01</div><h3>Создать</h3><p>«Добавить событие»<br>Паспорт · 20 лет<br>20.10.2006</p><p class="spaced">Срок: 18.01.2027</p></div>
     <span class="arrow">→</span>
-    <div class="card"><div class="number">02</div><h3>Включить</h3><code>/time 9<br>Asia/Novosibirsk<br>/resume</code><p class="spaced">Своё местное время</p></div>
+    <div class="card"><div class="number">02</div><h3>Включить</h3><p>«Настройки»<br>Напоминания<br>09:00 · Новосибирск</p><p class="spaced">Своё местное время</p></div>
     <span class="arrow">→</span>
-    <div class="card"><div class="number">03</div><h3>Подготовиться</h3><p>Сообщение от бота</p><code>/show код</code><p class="spaced">Шаги и источник</p></div>
+    <div class="card"><div class="number">03</div><h3>Подготовиться</h3><p>Сообщение от бота<br>«Рекомендации»</p><p class="spaced">Шаги и источник</p></div>
     <span class="arrow">→</span>
-    <div class="card"><div class="number">04</div><h3>Завершить</h3><p>Получить услугу</p><code>/done код</code><p class="spaced">Напоминания прекращаются</p></div>
+    <div class="card"><div class="number">04</div><h3>Завершить</h3><p>Получить услугу<br>«Выполнено»</p><p class="spaced">Напоминания прекращаются</p></div>
   </div>
-  <div class="card spaced small">События общие с календарём. По умолчанию детали в напоминаниях скрыты. Произвольная дата добавляется через <code>/add</code>; документы распознаются в мини-приложении.</div>
+  <div class="card spaced small">События общие с календарём. По умолчанию детали в напоминаниях скрыты. Произвольная дата добавляется через «Своё событие»; документы распознаются в мини-приложении.</div>
   <div class="footer"><span>Пример с вымышленной датой рождения</span><span>04 / 10</span></div>
 </section>
 <section class="slide">
   <div class="eyebrow">Интерфейс</div>
   <h2>Календарь для обзора. Чат для действий.</h2>
-  <div class="grid" style="grid-template-columns: 1.4fr 1fr">
+  <div class="grid" style="grid-template-columns: 1.4fr .55fr .9fr">
     <div class="card" style="padding:16px"><img class="screenshot" src="desktop.png" alt="Интерфейс календаря Вовремя"></div>
+    <div class="card" style="padding:12px"><img class="screenshot" src="mobile.png" alt="Календарь на мобильном экране"></div>
     <div class="card"><h3>Реализовано</h3><p>Календарь и фильтры.<br>Создание и завершение.<br>Шаблоны сроков.<br>OCR фото и PDF.<br>Настройка уведомлений.</p><p class="small muted spaced">Холодный светлый фон, Manrope, белые карточки и градиент #26A9F4 → #0756F5 → #6825F4.</p></div>
   </div>
-  <p class="small muted spaced">Поддерживаются мобильная ширина и десктоп. Проверку внутри реальных мобильного и веб-клиента MAX нужно завершить отдельно.</p>
+  <p class="small muted spaced">Адаптивный интерфейс: календарь и формы доступны на мобильном экране и десктопе. Скриншоты актуальной версии, синтетические события.</p>
   <div class="footer"><span>Скриншот локального демо · синтетические события</span><span>05 / 10</span></div>
 </section>
 <section class="slide">
   <div class="eyebrow">Эффект, который можно измерить</div>
   <h2>Цели пилота, а не обещанные результаты</h2>
   <div class="grid three">
-    <div class="card"><div class="number">≤ 2 мин</div><h3>До настройки</h3><p class="small">От /start до события с включёнными напоминаниями. Измеряем медиану времени на 20 участниках.</p></div>
-    <div class="card"><div class="number">≥ 80%</div><h3>Без подсказок</h3><p class="small">Самостоятельно создают напоминание и могут объяснить следующий шаг. Проверяем наблюдением и вопросом после /show.</p></div>
+    <div class="card"><div class="number">≤ 2 мин</div><h3>До настройки</h3><p class="small">От первого сообщения до события с включёнными напоминаниями. Измеряем медиану времени на 20 участниках.</p></div>
+    <div class="card"><div class="number">≥ 80%</div><h3>Без подсказок</h3><p class="small">Самостоятельно создают напоминание и могут объяснить следующий шаг. Проверяем вопросом после рекомендаций.</p></div>
     <div class="card"><div class="number">≥ 95%</div><h3>Принято MAX</h3><p class="small">В течение 5 минут после расчётного времени при работающем сервере. Измеряем историю доставок; это не показатель прочтения.</p></div>
   </div>
   <p class="spaced">Сравним с текущим способом пользователя: ручным календарём или заметкой. Короткий пилот не доказывает снижение просрочек.</p>
@@ -129,16 +133,16 @@ code { font-family: Consolas, monospace; font-size: .85em; overflow-wrap: anywhe
   <div class="eyebrow">Архитектура и проверка</div>
   <h2>Один профиль. Одна очередь событий.</h2>
   <div class="flow">
-    <div class="card"><h3>MAX</h3><p>Команды в чате<br>React-календарь</p></div><span class="arrow">→</span>
+    <div class="card"><h3>MAX</h3><p>Кнопки в чате<br>React-календарь</p></div><span class="arrow">→</span>
     <div class="card"><h3>Node.js API</h3><p>Подпись MAX<br>Секрет webhook<br>Валидация</p></div><span class="arrow">→</span>
     <div class="card"><h3>SQLite</h3><p>События<br>Входящая очередь<br>Доставки</p></div><span class="arrow">→</span>
     <div class="card accent"><h3>Планировщик</h3><p>Каждые 15 сек.<br>Повторы при сбое<br>Сообщение MAX</p></div>
   </div>
   <div class="grid spaced">
-    <div class="card"><h3>Проверено локально</h3><p class="small">18 серверных тестов, 5 браузерных сценариев, сборка TypeScript/Vite и Docker. События сохраняются после перезапуска контейнера.</p></div>
-    <div class="card"><h3>Следующая проверка</h3><p class="small">Живая доставка и доступность MAX. Диагностика API завершилась тайм-аутом; успешный локальный тест не означает отправленное пользователю сообщение.</p></div>
+    <div class="card"><h3>Проверено</h3><p class="small">27 серверных тестов в Linux-контейнере, 7 браузерных сценариев, TypeScript/Vite, Docker и сохранение данных после рестарта.</p></div>
+    <div class="card"><h3>Интеграция MAX</h3><p class="small">Доступны публичный HTTPS, MAX API и подписка на кнопки. Отдельная приёмка: полный путь в двух клиентах MAX и плановое сообщение при закрытом календаре.</p></div>
   </div>
-  <div class="footer"><span>Результат команды фиксируется до отправки ответа</span><span>07 / 10</span></div>
+  <div class="footer"><span>Результат действия фиксируется до отправки ответа</span><span>07 / 10</span></div>
 </section>
 <section class="slide">
   <div class="eyebrow">Данные и границы MVP</div>
@@ -163,11 +167,11 @@ code { font-family: Consolas, monospace; font-size: .85em; overflow-wrap: anywhe
   <div class="footer"><span>Ядро одинаковое; источники и условия региональные</span><span>09 / 10</span></div>
 </section>
 <section class="slide">
-  <div class="eyebrow">Источники и готовность к сдаче</div>
-  <h2>Проверяемый прототип.<br>Прозрачные ограничения.</h2>
+  <div class="eyebrow">Результат и основания</div>
+  <h2>Срок, напоминание, следующий шаг —<br>в одном диалоге.</h2>
   <div class="grid">
-    <div class="card small"><h3>Основания и документация</h3><p><a href="https://dev.max.ru/docs-api/methods/POST/messages">MAX: отправка сообщений</a></p><p><a href="https://www.mfc-nso.ru/services/detail/140589">МФЦ НСО: паспорт РФ</a></p><p><a href="https://www.consultant.ru/document/cons_doc_LAW_466454/6125ca6a5baabbd3bbff7302f2c6e114b94061fa/">Положение о паспорте, пункты 24 и 27</a></p><p><a href="https://www.nalog.gov.ru/nu/">ФНС: уведомления 2026 года</a></p><p><a href="https://39.rospotrebnadzor.ru/node/19583">Роспотребнадзор: обследования</a></p><p class="muted">Требования: предоставленный PDF «Забота о людях», стр. 6–19. Проверка источников: 25.09.2026.</p></div>
-    <div class="card small"><h3>До финальной отправки</h3><p>Подтвердить ссылку на бота и доступность HTTPS. Пройти сценарий в обоих клиентах MAX и получить плановое сообщение.</p><p>Заполнить команду и закрытые параметры доступа для организаторов.</p><p>Указать финальный commit hash материалов. Сдаваемую версию после дедлайна не изменять.</p><p class="muted">Подробный отчёт: docs/requirements-review.md. Проверка: docs/verification.md.</p></div>
+    <div class="card small"><h3>Основания и документация</h3><p><a href="https://dev.max.ru/docs-api/methods/POST/messages">MAX: отправка сообщений</a></p><p><a href="https://www.mfc-nso.ru/services/detail/140589">МФЦ НСО: паспорт РФ</a></p><p><a href="https://www.consultant.ru/document/cons_doc_LAW_466454/6125ca6a5baabbd3bbff7302f2c6e114b94061fa/">Положение о паспорте, пункты 24 и 27</a></p><p><a href="https://www.nalog.gov.ru/nu/">ФНС: уведомления 2026 года</a></p><p><a href="https://39.rospotrebnadzor.ru/node/19583">Роспотребнадзор: обследования</a></p><p class="muted">Задание «Забота о людях», стр. 6–19. Источники и даты их проверки указаны в каталоге услуг.</p></div>
+    <div class="card small"><h3>Что получает пользователь</h3><p>Сохраняет важную дату, получает напоминание в MAX и видит подготовку к обращению.</p><p>Завершает действие одной кнопкой; при необходимости добавляет следующую дату.</p><p><a href="https://max.ru/se14448730_bot">Открыть Вовремя в MAX</a><br><a href="https://github.com/nikeperl/MAX-hackaton">Код, документация и воспроизводимый запуск</a></p><p class="muted">Границы подтверждения: docs/requirements-review.md. Протокол проверки: docs/verification.md.</p></div>
   </div>
   <div class="footer"><span>Вовремя · для жизни без лишних забот</span><span>10 / 10</span></div>
 </section>

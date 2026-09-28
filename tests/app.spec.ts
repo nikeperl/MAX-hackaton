@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+﻿import { test, expect } from "@playwright/test";
 test("create, reload, complete, parse a document, and save settings", async ({
   page,
 }) => {
@@ -79,11 +79,11 @@ test("mobile calendar, dialogs and navigation fit the screen", async ({
     )
     .toBe(true);
   await page.getByRole("button", { name: "Скрыть сообщение" }).click();
-  await page.screenshot({ path: "docs/mobile.png", fullPage: true });
   await page
     .locator(".mobile-nav")
     .getByRole("button", { name: "Календарь", exact: true })
     .click();
+  await page.screenshot({ path: "docs/mobile.png", fullPage: false });
   await page.getByRole("button", { name: "Следующий месяц" }).click();
   await page
     .locator(".page-heading")
@@ -104,5 +104,9 @@ test("desktop screenshot", async ({ page }) => {
   await page.getByRole("button", { name: "Показать примеры" }).click();
   await expect(page.locator(".upcoming-card")).toHaveCount(3);
   await page.getByRole("button", { name: "Скрыть сообщение" }).click();
-  await page.screenshot({ path: "docs/desktop.png", fullPage: true });
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /^Календарь/ })
+    .click();
+  await page.screenshot({ path: "docs/desktop.png", fullPage: false });
 });

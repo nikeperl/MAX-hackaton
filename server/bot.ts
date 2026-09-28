@@ -9,11 +9,11 @@ import {
   formatDate,
   todayIn,
   addDays,
-  nextSteps,
   type Deadline,
   type User,
 } from "../shared/domain.js";
-import { postMaxJson } from "./max-api.js";
+import { getMaxApiUrl, postMaxJson } from "./max-api.js";
+import { stepsText } from "./chat-format.js";
 import { chatReply, menuButtons, type Keyboard } from "./chat.js";
 import { chatCopy, templateById } from "../shared/content.js";
 export type SendMessage = (
@@ -23,7 +23,7 @@ export type SendMessage = (
 ) => Promise<void>;
 export function maxSender(
   token: string,
-  apiUrl = "https://platform-api2.max.ru",
+  apiUrl = getMaxApiUrl(),
   transport = postMaxJson,
 ): SendMessage {
   // One queue per process keeps both global and per-dialog limits below MAX limits.
@@ -71,9 +71,7 @@ export function reminderText(
         ? "today"
         : "future",
     milestone,
-    nextSteps({ ...event, notes: event.notes.slice(0, 700) })
-      .map((step, i) => `${i + 1}. ${step}`)
-      .join("\n"),
+    stepsText(event, 700),
     template.details.serviceUrl ?? "",
     template.details.source?.url ?? "",
   );

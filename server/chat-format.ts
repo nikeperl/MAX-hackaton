@@ -8,6 +8,12 @@ import {
 } from "../shared/domain.js";
 
 // Formatting only; editable text and catalog entries live in shared/content.ts.
+export function stepsText(event: Deadline, noteLimit = 1000) {
+  return nextSteps({ ...event, notes: event.notes.slice(0, noteLimit) })
+    .map((step, i) => `${i + 1}. ${step}`)
+    .join("\n");
+}
+
 export function statusText(user: User) {
   return chatCopy.status(
     user.settings.enabled,
@@ -24,9 +30,7 @@ export function eventDetails(event: Deadline) {
     formatDate(event.dueDate),
     event.completed,
     template.rule,
-    nextSteps({ ...event, notes: event.notes.slice(0, 1000) })
-      .map((step, i) => `${i + 1}. ${step}`)
-      .join("\n"),
+    stepsText(event),
     template.details.conditions ?? "",
     template.details.source?.url ?? "",
     template.details.serviceUrl ?? "",

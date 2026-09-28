@@ -1,12 +1,12 @@
 import "dotenv/config";
-import { postMaxJson } from "./max-api.js";
+import { getMaxApiUrl, postMaxJson } from "./max-api.js";
 import { maxUpdateTypes } from "./max-events.js";
 
 // Read-only diagnostic. Never print tokens, webhook secrets or user conversations.
 async function checkBot() {
   const token = process.env.MAX_BOT_TOKEN;
   if (!token) throw new Error("MAX_BOT_TOKEN не задан");
-  const api = process.env.MAX_API_URL || "https://platform-api2.max.ru";
+  const api = getMaxApiUrl();
   const bot = await postMaxJson<{ username?: string; commands?: unknown[] }>(
     `${api}/me`,
     token,

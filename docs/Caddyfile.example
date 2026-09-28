@@ -1,5 +1,0 @@
-# Замените домен своим. Caddy получает доверенный TLS-сертификат.
-your-domain.example {
-    encode gzip zstd
-    reverse_proxy 127.0.0.1:3001
-}

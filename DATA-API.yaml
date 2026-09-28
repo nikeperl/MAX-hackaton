@@ -1,10 +1,11 @@
-# Собственная декларативная схема проверок v1: формат организаторов в PDF не задан.
-# Подстановки base_url/token/event_id выполняет проверяющий, это не исполняемый runner.
+# Project check schema v1; the brief does not define an evaluation schema.
+# The evaluator supplies base_url/token/event_id; this file is not a test runner.
 schema_version: "1.0"
 solution: "Вовремя"
 base_url: "https://84.237.53.134/api"
 local_demo_url: "http://localhost:3002/api"
-public_endpoint_verified: false
+public_endpoint_verified: true
+public_endpoint_checked_on: "2026-09-28"
 authentication:
   role: user
   production: "POST /session с действующими подписанными initData из MAX; пароль не используется"
@@ -40,12 +41,21 @@ checks:
     path: /events
     parameters:
       headers: { Authorization: "Bearer ${token}" }
-      body: { templateId: passport, title: "Тест: замена паспорта", category: documents, baseDate: "2006-10-20", age: 20, reminders: [30, 7, 1, 0] }
+      body:
+        {
+          templateId: passport,
+          title: "Тест: замена паспорта",
+          category: documents,
+          baseDate: "2006-10-20",
+          age: 20,
+          reminders: [30, 7, 1, 0],
+        }
     expected:
       status: [201]
       content_type: application/json
       required_fields: [id, dueDate, milestoneDate, completed]
-      values: { dueDate: "2027-01-18", milestoneDate: "2026-10-20", completed: false }
+      values:
+        { dueDate: "2027-01-18", milestoneDate: "2026-10-20", completed: false }
       capture: { event_id: id }
   - id: list
     role: user
@@ -64,7 +74,13 @@ checks:
     path: /settings
     parameters:
       headers: { Authorization: "Bearer ${token}" }
-      body: { enabled: true, hour: 9, timezone: Asia/Novosibirsk, privateMessages: true }
+      body:
+        {
+          enabled: true,
+          hour: 9,
+          timezone: Asia/Novosibirsk,
+          privateMessages: true,
+        }
     expected:
       status: [200]
       content_type: application/json

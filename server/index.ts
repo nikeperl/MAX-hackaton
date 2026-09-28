@@ -2,7 +2,7 @@ import "dotenv/config";
 import { openDatabase } from "./db.js";
 import { createApp } from "./app.js";
 import { maxSender, processInbox, processReminders } from "./bot.js";
-import { postMaxJson } from "./max-api.js";
+import { getMaxApiUrl, postMaxJson } from "./max-api.js";
 const production = process.env.NODE_ENV === "production";
 const demo =
   process.env.DEMO_MODE === "true" ||
@@ -28,7 +28,7 @@ const app = createApp(db, {
   onUpdate: () => setImmediate(() => void tick()),
   onCallback: (id) => {
     void postMaxJson<{ success: boolean }>(
-      `${process.env.MAX_API_URL || "https://platform-api2.max.ru"}/answers?callback_id=${encodeURIComponent(id)}`,
+      `${getMaxApiUrl()}/answers?callback_id=${encodeURIComponent(id)}`,
       token,
       {},
     )
