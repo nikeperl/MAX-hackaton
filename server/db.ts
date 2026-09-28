@@ -28,7 +28,15 @@ export function openDatabase(path: string) {
  CREATE TABLE IF NOT EXISTS deliveries (id TEXT PRIMARY KEY,event_id TEXT REFERENCES events(id) ON DELETE CASCADE,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,title TEXT NOT NULL,status TEXT NOT NULL,sent_at TEXT,attempts INTEGER DEFAULT 0,next_attempt INTEGER DEFAULT 0);
  CREATE TABLE IF NOT EXISTS inbox (id TEXT PRIMARY KEY,payload TEXT NOT NULL,status TEXT DEFAULT 'pending',attempts INTEGER DEFAULT 0,next_attempt INTEGER DEFAULT 0);
  CREATE TABLE IF NOT EXISTS chat_state (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,data TEXT NOT NULL,updated_at INTEGER NOT NULL);
+ CREATE TABLE IF NOT EXISTS bot_views (mid TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,last_payload TEXT,buttons TEXT NOT NULL,updated_at INTEGER NOT NULL);
+ CREATE TABLE IF NOT EXISTS callback_guard (id TEXT PRIMARY KEY,last_payload TEXT NOT NULL,last_at INTEGER NOT NULL);
  CREATE INDEX IF NOT EXISTS events_user ON events(user_id);`);
+  db.prepare("DELETE FROM bot_views WHERE updated_at<?").run(
+    Date.now() - 90 * 86400000,
+  );
+  db.prepare("DELETE FROM callback_guard WHERE last_at<?").run(
+    Date.now() - 86400000,
+  );
   // Persist a command's result with its mutations before attempting network delivery.
   const columns = db.prepare("PRAGMA table_info(inbox)").all() as {
     name: string;

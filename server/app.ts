@@ -37,6 +37,7 @@ export function createApp(db: DB, config: Config) {
     next();
   });
   const limits = new Map<string, { count: number; until: number }>();
+  const recentCallbacks = new Map<string, { payload: string; at: number }>();
   app.use("/api", (req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     const key = req.ip || "local";
@@ -91,6 +92,28 @@ export function createApp(db: DB, config: Config) {
       res.sendStatus(400);
       return;
     }
+    let recentCallback: [string, { payload: string; at: number }] | undefined;
+    if (update.update_type === "message_callback") {
+      const now = Date.now();
+      const key = hashToken(
+        JSON.stringify([
+          update.callback.user?.user_id,
+          update.message?.body?.mid || "",
+        ]),
+      );
+      const previous = recentCallbacks.get(key);
+      if (
+        previous && previous.payload === update.callback.payload &&
+        now - previous.at < 1500
+      ) {
+        res.sendStatus(200);
+        return;
+      }
+      if (recentCallbacks.size > 10000)
+        for (const [id, entry] of recentCallbacks)
+          if (now - entry.at > 1500) recentCallbacks.delete(id);
+      recentCallback = [key, { payload: update.callback.payload, at: now }];
+    }
     // Persist before acknowledging. Retries of the same update cannot enqueue another reply.
     const id = hashToken(
       JSON.stringify(
@@ -107,6 +130,8 @@ export function createApp(db: DB, config: Config) {
     const inserted = db
       .prepare("INSERT OR IGNORE INTO inbox(id,payload) VALUES(?,?)")
       .run(id, JSON.stringify(update));
+    if (inserted.changes && recentCallback)
+      recentCallbacks.set(...recentCallback);
     res.sendStatus(200);
     if (inserted.changes) {
       if (update.update_type === "message_callback")

@@ -156,6 +156,113 @@ test("saved settings without minutes keep the previous whole-hour schedule", () 
   }
 });
 
+test("callbacks edit one message and ignore repeated or obsolete buttons", async () => {
+  const db = openDatabase(":memory:");
+  ensureUser(db, "42", "Тест");
+  const edits: { mid: string; text: string; buttons: Keyboard }[] = [];
+  let sends = 0;
+  const transport = Object.assign(
+    async () => {
+      sends++;
+      return "new-mid";
+    },
+    {
+      edit: async (mid: string, text: string, buttons: Keyboard) => {
+        edits.push({ mid, text, buttons });
+      },
+    },
+  );
+  const enqueue = (id: string, action: string, mid = "menu-mid") =>
+    db.prepare("INSERT INTO inbox(id,payload) VALUES(?,?)").run(
+      id,
+      JSON.stringify({
+        update_type: "message_callback",
+        callback: { callback_id: id, payload: action, user: { user_id: 42 } },
+        message: { recipient: { chat_type: "dialog" }, body: { mid } },
+      }),
+    );
+  try {
+    enqueue("1", "catalog");
+    enqueue("2", "catalog");
+    enqueue("3", "catalog");
+    await processInbox(db, transport);
+    assert.equal(edits.length, 1);
+    assert.equal(edits[0].mid, "menu-mid");
+    assert.equal(sends, 0);
+    enqueue("4", "catalog:documents:0");
+    enqueue("5", "settings");
+    await processInbox(db, transport);
+    assert.equal(edits.length, 2);
+    assert.match(edits[1].text, /Личные документы/);
+    assert.equal(sends, 0);
+    assert.equal(
+      (
+        db
+          .prepare("SELECT count(*) AS n FROM inbox WHERE status='done'")
+          .get() as any
+      ).n,
+      5,
+    );
+    enqueue("6", "settings", "settings-mid");
+    await processInbox(db, transport);
+    enqueue("7", "test", "settings-mid");
+    enqueue("8", "test", "settings-mid");
+    await processInbox(db, transport);
+    assert.equal(sends, 1);
+    assert.equal(edits.length, 3);
+  } finally {
+    db.close();
+  }
+});
+
+test("a failed edit retries the saved answer without processing the button twice", async () => {
+  const db = openDatabase(":memory:");
+  ensureUser(db, "42", "Тест");
+  let attempts = 0;
+  const transport = Object.assign(
+    async () => {
+      assert.fail("Callback must edit the current message");
+    },
+    {
+      edit: async () => {
+        if (++attempts === 1) throw new Error("Temporary MAX error");
+      },
+    },
+  );
+  try {
+    db.prepare("INSERT INTO inbox(id,payload) VALUES(?,?)").run(
+      "retry",
+      JSON.stringify({
+        update_type: "message_callback",
+        callback: {
+          callback_id: "retry",
+          payload: "catalog",
+          user: { user_id: 42 },
+        },
+        message: {
+          recipient: { chat_type: "dialog" },
+          body: { mid: "retry-mid" },
+        },
+      }),
+    );
+    await processInbox(db, transport, 1000);
+    assert.equal(
+      (db.prepare("SELECT status FROM inbox WHERE id='retry'").get() as any)
+        .status,
+      "failed",
+    );
+    await processInbox(db, transport, 32000);
+    assert.equal(attempts, 2);
+    assert.equal(
+      (db.prepare("SELECT status FROM inbox WHERE id='retry'").get() as any)
+        .status,
+      "done",
+    );
+  } finally {
+    db.close();
+  }
+});
+
 test("callback responses persist through failed delivery; stale save and group callbacks cannot create events", async () => {
   const db = openDatabase(":memory:");
   ensureUser(db, "42", "Тест");

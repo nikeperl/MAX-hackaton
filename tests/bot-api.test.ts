@@ -6,7 +6,7 @@ import { createApp } from "../server/app.js";
 import { openDatabase } from "../server/db.js";
 import { processInbox } from "../server/bot.js";
 
-test("webhook validates callbacks and deduplicates by callback ID, not message or timestamp", async () => {
+test("webhook validates callbacks and suppresses repeated button presses", async () => {
   const db = openDatabase(":memory:");
   const acknowledged: string[] = [];
   const server = createApp(db, {
@@ -56,7 +56,20 @@ test("webhook validates callbacks and deduplicates by callback ID, not message o
       ).status,
       200,
     );
-    assert.deepEqual(acknowledged, ["first", "second"]);
+    assert.equal(
+      (
+        await post({
+          ...update,
+          callback: {
+            ...update.callback,
+            callback_id: "third",
+            payload: "settings",
+          },
+        })
+      ).status,
+      200,
+    );
+    assert.deepEqual(acknowledged, ["first", "third"]);
     assert.equal(
       (db.prepare("SELECT count(*) AS n FROM inbox").get() as any).n,
       2,

@@ -16,21 +16,32 @@ import { getMaxApiUrl, postMaxJson } from "./max-api.js";
 import { stepsText } from "./chat-format.js";
 import { chatReply, menuButtons, type Keyboard } from "./chat.js";
 import { chatCopy, templateById } from "../shared/content.js";
+import { createHash } from "node:crypto";
 export type SendMessage = (
   userId: string,
   text: string,
   buttons?: Keyboard,
-) => Promise<void>;
+) => Promise<string | void>;
+export type BotTransport = SendMessage & {
+  edit?: (mid: string, text: string, buttons: Keyboard) => Promise<void>;
+};
 export function maxSender(
   token: string,
   apiUrl = getMaxApiUrl(),
   transport = postMaxJson,
-): SendMessage {
+): BotTransport {
   // One queue per process keeps both global and per-dialog limits below MAX limits.
   let queue = Promise.resolve();
-  return (userId, text, buttons = menuButtons) => {
-    const job = queue.then(async () => {
-      const body = await transport<{ message?: unknown }>(
+  const schedule = <T>(run: () => Promise<T>) => {
+    const job = queue.then(run);
+    queue = job
+      .catch(() => {})
+      .then(() => new Promise<void>((resolve) => setTimeout(resolve, 550)));
+    return job;
+  };
+  const send: BotTransport = (userId, text, buttons = menuButtons) =>
+    schedule(async () => {
+      const body = await transport<{ message?: { body?: { mid?: string } } }>(
         `${apiUrl}/messages?user_id=${encodeURIComponent(userId)}`,
         token,
         {
@@ -47,12 +58,73 @@ export function maxSender(
         },
       );
       if (!body.message) throw new Error("MAX не подтвердил отправку");
+      return body.message.body?.mid;
     });
-    queue = job
-      .catch(() => {})
-      .then(() => new Promise<void>((resolve) => setTimeout(resolve, 550)));
-    return job;
-  };
+  send.edit = (mid, text, buttons) =>
+    schedule(async () => {
+      const body = await transport<{ success: boolean }>(
+        `${apiUrl}/messages?message_id=${encodeURIComponent(mid)}`,
+        token,
+        {
+          text: text.slice(0, 4000),
+          notify: false,
+          attachments: [{ type: "inline_keyboard", payload: { buttons } }],
+        },
+        "PUT",
+      );
+      if (!body.success) throw new Error("MAX не подтвердил редактирование");
+    });
+  return send;
+}
+function rememberView(
+  db: DB,
+  mid: string | void,
+  userId: string,
+  buttons: Keyboard,
+  lastPayload: string | null = null,
+) {
+  if (!mid) return;
+  db.prepare(
+    "INSERT INTO bot_views(mid,user_id,last_payload,buttons,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(mid) DO UPDATE SET user_id=excluded.user_id,last_payload=excluded.last_payload,buttons=excluded.buttons,updated_at=excluded.updated_at",
+  ).run(mid, userId, lastPayload, JSON.stringify(buttons), Date.now());
+}
+function acceptsCallback(db: DB, mid: string, userId: string, payload: string) {
+  const view = db
+    .prepare("SELECT user_id,last_payload,buttons FROM bot_views WHERE mid=?")
+    .get(mid) as
+    | { user_id: string; last_payload: string | null; buttons: string }
+    | undefined;
+  if (!view) return true;
+  if (view.user_id !== userId || view.last_payload === payload) return false;
+  return (JSON.parse(view.buttons) as Keyboard)
+    .flat()
+    .some((button) => button.type === "callback" && button.payload === payload);
+}
+function acceptsRecentAction(
+  db: DB,
+  userId: string,
+  mid: string | null,
+  payload: string,
+  at: number,
+) {
+  const key = createHash("sha256")
+    .update(JSON.stringify([userId, mid]))
+    .digest("hex");
+  const row = db
+    .prepare("SELECT last_payload,last_at FROM callback_guard WHERE id=?")
+    .get(key) as { last_payload: string; last_at: number } | undefined;
+  const cooldown = payload === "test" ? 5000 : 1000;
+  if (
+    row?.last_payload === payload &&
+    at >= row.last_at &&
+    at - row.last_at < cooldown
+  )
+    return false;
+  if (row && at < row.last_at) return false;
+  db.prepare(
+    "INSERT INTO callback_guard(id,last_payload,last_at) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET last_payload=excluded.last_payload,last_at=excluded.last_at",
+  ).run(key, payload, at);
+  return true;
 }
 export function reminderText(
   event: Deadline,
@@ -117,7 +189,7 @@ export function dueReminders(event: Deadline, user: User, now: Date) {
 }
 export async function processReminders(
   db: DB,
-  send: SendMessage,
+  send: BotTransport,
   now = new Date(),
 ) {
   const users = (
@@ -155,7 +227,22 @@ export async function processReminders(
           continue;
         }
         try {
-          await send(
+          const buttons: Keyboard = [
+            [
+              {
+                type: "callback",
+                text: chatCopy.buttons.recommendations,
+                payload: `show:${event.id}`,
+              },
+              {
+                type: "callback",
+                text: chatCopy.buttons.completed,
+                payload: `done:${event.id}`,
+              },
+            ],
+            ...menuButtons,
+          ];
+          const mid = await send(
             user.id,
             reminderText(
               freshEvent,
@@ -163,22 +250,9 @@ export async function processReminders(
               todayIn(freshUser.settings.timezone, now),
               point.milestone,
             ),
-            [
-              [
-                {
-                  type: "callback",
-                  text: chatCopy.buttons.recommendations,
-                  payload: `show:${event.id}`,
-                },
-                {
-                  type: "callback",
-                  text: chatCopy.buttons.completed,
-                  payload: `done:${event.id}`,
-                },
-              ],
-              ...menuButtons,
-            ],
+            buttons,
           );
+          rememberView(db, mid, user.id, buttons);
           db.prepare(
             "UPDATE deliveries SET status='sent',sent_at=? WHERE id=?",
           ).run(now.toISOString(), point.id);
@@ -191,7 +265,7 @@ export async function processReminders(
 }
 export async function processInbox(
   db: DB,
-  send: SendMessage,
+  send: BotTransport,
   now = Date.now(),
 ) {
   const rows = db
@@ -210,8 +284,14 @@ export async function processInbox(
       // A retry sends the saved result without repeating creation or other mutations.
       if (row.response) {
         const reply = JSON.parse(row.response);
-        if (getUser(db, reply.userId)?.botStarted)
-          await send(reply.userId, reply.text, reply.buttons);
+        if (getUser(db, reply.userId)?.botStarted) {
+          if (reply.editMid && send.edit)
+            await send.edit(reply.editMid, reply.text, reply.buttons);
+          else {
+            const mid = await send(reply.userId, reply.text, reply.buttons);
+            rememberView(db, mid, reply.userId, reply.buttons);
+          }
+        }
         db.prepare(
           "UPDATE inbox SET status='done',payload='{}',response=NULL WHERE id=?",
         ).run(row.id);
@@ -267,20 +347,49 @@ export async function processInbox(
           : update.update_type === "message_callback"
             ? String(update.callback?.payload || "")
             : String(update.message?.body?.text || "");
+      const sourceMid =
+        update.update_type === "message_callback" &&
+        typeof update.message?.body?.mid === "string"
+          ? update.message.body.mid
+          : null;
+      const editMid =
+        text !== "test" && sourceMid && send.edit ? sourceMid : null;
       const answer = db.transaction(() => {
+        if (
+          (sourceMid && !acceptsCallback(db, sourceMid, id, text)) ||
+          (update.update_type === "message_callback" &&
+            !acceptsRecentAction(
+              db,
+              id,
+              sourceMid,
+              text,
+              Number.isFinite(update.timestamp) ? update.timestamp : Date.now(),
+            ))
+        ) {
+          db.prepare(
+            "UPDATE inbox SET status='done',payload='{}' WHERE id=?",
+          ).run(row.id);
+          return null;
+        }
         const result = chatReply(
           db,
           user,
           text,
           update.update_type === "message_callback",
         );
+        if (editMid) rememberView(db, editMid, id, result.buttons, text);
         db.prepare("UPDATE inbox SET response=? WHERE id=?").run(
-          JSON.stringify({ userId: id, ...result }),
+          JSON.stringify({ userId: id, editMid, ...result }),
           row.id,
         );
         return result;
       })();
-      await send(id, answer.text, answer.buttons);
+      if (!answer) continue;
+      if (editMid) await send.edit!(editMid, answer.text, answer.buttons);
+      else {
+        const mid = await send(id, answer.text, answer.buttons);
+        rememberView(db, mid, id, answer.buttons);
+      }
       db.prepare(
         "UPDATE inbox SET status='done',payload='{}',response=NULL WHERE id=?",
       ).run(row.id);

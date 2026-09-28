@@ -21,7 +21,7 @@ export async function postMaxJson<T>(
   url: string,
   token: string,
   payload: unknown,
-  method: "POST" | "PATCH" | "GET" = "POST",
+  method: "POST" | "PATCH" | "PUT" | "GET" = "POST",
 ): Promise<T> {
   const target = new URL(url);
   if (target.protocol !== "https:") throw new Error("MAX API requires HTTPS");

@@ -40,6 +40,37 @@ test("MAX transport sends a notifying message with menu buttons and requires del
   assert.equal(calls, 2);
 });
 
+test("MAX transport edits a button message without a new push notification", async () => {
+  const calls: { url: string; method?: string; payload: any }[] = [];
+  const sender = maxSender(
+    "fake-test-token",
+    "https://platform-api2.max.ru",
+    async <T>(
+      url: string,
+      _token: string,
+      payload: unknown,
+      method?: string,
+    ) => {
+      calls.push({ url, method, payload });
+      return { success: true } as T;
+    },
+  );
+  await sender.edit!("mid.123", "Открыт каталог", [
+    [{ type: "callback", text: "Назад", payload: "menu" }],
+  ]);
+  assert.equal(calls.length, 1);
+  assert.equal(
+    calls[0].url,
+    "https://platform-api2.max.ru/messages?message_id=mid.123",
+  );
+  assert.equal(calls[0].method, "PUT");
+  assert.equal(calls[0].payload.notify, false);
+  assert.equal(
+    calls[0].payload.attachments[0].payload.buttons[0][0].payload,
+    "menu",
+  );
+});
+
 test("chat-only journey creates, configures, reminds, explains and completes shared events", async () => {
   const db = openDatabase(":memory:");
   const sent: { id: string; text: string }[] = [];
