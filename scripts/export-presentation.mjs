@@ -1,15 +1,8 @@
 import { chromium } from "@playwright/test";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import { parse } from "dotenv";
 
 const options = new Set(process.argv.slice(2));
@@ -22,65 +15,20 @@ const git = (...args) =>
     ["-c", `safe.directory=${resolve(".").replaceAll("\\", "/")}`, ...args],
     { encoding: "utf8" },
   );
-let version = `Git ${git("rev-parse", "HEAD").trim()}`;
-
-if (options.has("--snapshot")) {
-  mkdirSync("submission", { recursive: true });
-  mkdirSync(".cache", { recursive: true });
-  const files = git(
-    "ls-files",
-    "-z",
-    "--cached",
-    "--others",
-    "--exclude-standard",
-  )
-    .split("\0")
-    .filter(
-      (file) => file && existsSync(file) && file !== "docs/presentation.pdf",
-    )
-    .filter(
-      (file) =>
-        !/(^|\/)(?:\.env(?!\.example$)|submission\/|\.cache\/)|\.(?:key|pem|p12|pfx|token|sqlite(?:-wal|-shm)?)$/.test(
-          file,
-        ),
-    );
-  const listPath = resolve(".cache/submission-files.txt");
-  try {
-    writeFileSync(listPath, files.join("\0") + "\0");
-    execFileSync("tar", [
-      "-czf",
-      resolve("submission/source.tar.gz"),
-      "--null",
-      "-T",
-      listPath,
-    ]);
-  } finally {
-    if (existsSync(listPath)) unlinkSync(listPath);
-  }
-  const digest = createHash("sha256")
-    .update(readFileSync("submission/source.tar.gz"))
-    .digest("hex");
-  writeFileSync("submission/source.sha256", `${digest}  source.tar.gz\n`);
-  version = `Архив source.tar.gz · SHA-256 ${digest}`;
-} else if (options.has("--use-snapshot")) {
-  const digest = createHash("sha256")
-    .update(readFileSync("submission/source.tar.gz"))
-    .digest("hex");
-  version = `Архив source.tar.gz · SHA-256 ${digest}`;
-}
+const version = privateExport ? `Git commit ${git('rev-parse', 'HEAD').trim()}` : '';
 
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage({
     viewport: { width: 1280, height: 720 },
   });
-  await page.goto(pathToFileURL(resolve("docs/presentation.html")).href);
+  await page.goto(pathToFileURL(resolve(privateExport ? "docs/.private-presentation.html" : "docs/presentation.html")).href);
   await page.evaluate(() => document.fonts.ready);
-  await page.locator("[data-code-version]").textContent();
-  await page.locator("[data-code-version]").evaluate((element, text) => {
-    element.textContent = text;
-  }, version);
+  await page.emulateMedia({ media: 'print' });
   if (privateExport) {
+    await page.locator("[data-code-version]").evaluate((element, text) => {
+      element.textContent = text;
+    }, version);
     const config = parse(readFileSync(".env", "utf8"));
     const required = [
       "MAX_BOT_TOKEN",
@@ -93,6 +41,9 @@ try {
     const entries = [...required, "MAX_API_URL", "APP_DOMAIN", "PUBLIC_IP"]
       .filter((key) => config[key])
       .map((key) => [key, config[key]]);
+    entries.push(['NODE_ENV', 'production'], ['DEMO_MODE', 'false'], ['PORT', '3001'], ['DATABASE_PATH', '/app/data/vovremya.sqlite']);
+    await page.locator('[data-access-title]').textContent();
+    await page.locator('[data-access-title]').evaluate(el => { el.textContent = 'ЗАКРЫТЫЙ ЭКЗЕМПЛЯР ДЛЯ ЖЮРИ · РАБОЧИЕ ПАРАМЕТРЫ · НЕ ПУБЛИКОВАТЬ'; });
     await page.locator("[data-private-access]").evaluate((element, entries) => {
       element.className = "access-settings";
       element.replaceChildren(
@@ -126,6 +77,20 @@ try {
   );
   if (overflow.length)
     throw new Error(`Slides overflow: ${overflow.join(", ")}`);
+  const layoutProblems = await slides.evaluateAll(items => items.flatMap((item, index) => {
+    const content = item.querySelector('.content');
+    const footer = item.querySelector('footer').getBoundingClientRect();
+    const header = item.querySelector('header');
+    const problems = [];
+    if (header && header.getBoundingClientRect().bottom > content.getBoundingClientRect().top - 12) problems.push('header/content');
+    if (content) for (const el of content.querySelectorAll('p,h3,td,img,.result,.note,.access-box')) {
+      const box = el.getBoundingClientRect();
+      if (box.bottom > footer.top - 8) problems.push(el.tagName + ': footer overlap');
+      if (box.right > item.getBoundingClientRect().right - 40) problems.push(el.tagName + ': horizontal overflow');
+    }
+    return problems.length ? [`${index+1}: ${[...new Set(problems)].join(', ')}`] : [];
+  }));
+  if (layoutProblems.length) throw new Error(`Layout problems: ${layoutProblems.join('; ')}`);
   const output = privateExport
     ? "submission/presentation-private.pdf"
     : "docs/presentation.pdf";
@@ -135,6 +100,7 @@ try {
     printBackground: true,
     preferCSSPageSize: true,
   });
+  if (!privateExport) copyFileSync(output, 'presentation.pdf');
   if (options.has("--previews")) {
     mkdirSync(".cache/presentation", { recursive: true });
     for (let i = 0; i < count; i++)

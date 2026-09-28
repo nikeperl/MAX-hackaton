@@ -16,6 +16,7 @@ id_rsa
 id_ed25519
 backups/
 submission/
+docs/.private-presentation.html
 deploy/ip/acme/
 deploy/ip/certs/
 
