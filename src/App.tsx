@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   Fragment,
@@ -56,6 +57,7 @@ import {
   nextSteps,
   calculateDeadline,
   formatDate,
+  formatReminderTime,
   todayIn,
   dayDiff,
   addDays,
@@ -1023,7 +1025,8 @@ export default function App() {
                   <div>
                     <strong>Напоминания и часовой пояс</strong>
                     <p>
-                      {user.settings.hour}:00 · {user.settings.timezone}
+                      {formatReminderTime(user.settings)} ·{" "}
+                      {user.settings.timezone}
                     </p>
                   </div>
                   <button
@@ -1915,6 +1918,76 @@ function DocumentUpload({
     </Modal>
   );
 }
+const wheelStep = 40;
+function TimeWheel({
+  label,
+  value,
+  count,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  count: number;
+  onChange: (value: number) => void;
+}) {
+  const wheel = useRef<HTMLDivElement>(null);
+  const selected = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (wheel.current && selected.current !== value) {
+      selected.current = value;
+      wheel.current.scrollTop = value * wheelStep;
+    }
+  }, [value]);
+  const choose = (next: number) => {
+    const clamped = Math.max(0, Math.min(count - 1, next));
+    selected.current = clamped;
+    if (wheel.current) wheel.current.scrollTop = clamped * wheelStep;
+    onChange(clamped);
+  };
+  return (
+    <div className="time-wheel-column">
+      <span>{label}</span>
+      <div
+        ref={wheel}
+        className="time-wheel"
+        role="listbox"
+        aria-label={label}
+        tabIndex={0}
+        onScroll={(event) => {
+          const next = Math.max(
+            0,
+            Math.min(
+              count - 1,
+              Math.round(event.currentTarget.scrollTop / wheelStep),
+            ),
+          );
+          if (next !== selected.current) {
+            selected.current = next;
+            onChange(next);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            choose(value + (event.key === "ArrowDown" ? 1 : -1));
+          }
+        }}
+      >
+        {Array.from({ length: count }, (_, i) => (
+          <div
+            role="option"
+            aria-selected={value === i}
+            className={value === i ? "selected" : ""}
+            key={i}
+            onClick={() => choose(i)}
+          >
+            {String(i).padStart(2, "0")}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 function Notifications({
   user,
   botUrl,
@@ -2001,21 +2074,29 @@ function Notifications({
           </div>
         )}
         <div className="form-row">
-          <label className="field">
-            Время напоминаний
-            <select
-              value={settings.hour}
-              onChange={(e) =>
-                setSettings({ ...settings, hour: Number(e.target.value) })
-              }
-            >
-              {Array.from({ length: 24 }, (_, i) => (
-                <option value={i} key={i}>
-                  {String(i).padStart(2, "0")}:00
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="field time-picker">
+            <strong>Время напоминаний</strong>
+            <div className="time-wheel-group">
+              <TimeWheel
+                label="Часы"
+                value={settings.hour}
+                count={24}
+                onChange={(hour) =>
+                  setSettings((current) => ({ ...current, hour }))
+                }
+              />
+              <span aria-hidden="true">:</span>
+              <TimeWheel
+                label="Минуты"
+                value={settings.minute}
+                count={60}
+                onChange={(minute) =>
+                  setSettings((current) => ({ ...current, minute }))
+                }
+              />
+            </div>
+            <small>Прокрутите часы и минуты отдельно</small>
+          </div>
           <label className="field">
             Часовой пояс
             <select
@@ -2100,12 +2181,11 @@ function Notifications({
             </strong>
             <p>
               {settings.privateMessages
-                ? "В вашем календаре приближается срок события. Команда /show с кодом события покажет дату и рекомендации прямо в чате."
+                ? "В вашем календаре приближается срок события. Кнопка «Рекомендации» покажет следующие действия прямо в чате."
                 : "До срока подачи документов осталось 7 дней. Подготовьте паспорт и фотографии, проверьте список документов на Госуслугах."}
             </p>
             <small>
-              {String(settings.hour).padStart(2, "0")}:00{" "}
-              <CheckCheck size={13} />
+              {formatReminderTime(settings)} <CheckCheck size={13} />
             </small>
             <span>
               Открыть календарь <ArrowUpRight size={15} />

@@ -54,6 +54,18 @@ test("create, reload, complete, parse a document, and save settings", async ({
     .getByRole("switch", { name: "Получать напоминания", exact: true })
     .click();
   await page.getByLabel("Часовой пояс").selectOption("Asia/Novosibirsk");
+  await page.getByRole("listbox", { name: "Часы" }).evaluate((wheel) => {
+    wheel.scrollTop = 11 * 40;
+  });
+  await page.getByRole("listbox", { name: "Минуты" }).evaluate((wheel) => {
+    wheel.scrollTop = 37 * 40;
+  });
+  await expect(
+    page.getByRole("option", { name: "11", selected: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("option", { name: "37", selected: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Сохранить настройки" }).click();
   await expect(page.getByRole("status")).toContainText("сохранены");
   await page.reload({ waitUntil: "domcontentloaded" });
@@ -65,6 +77,12 @@ test("create, reload, complete, parse a document, and save settings", async ({
     page.getByRole("switch", { name: "Получать напоминания", exact: true }),
   ).toBeChecked();
   await expect(page.getByLabel("Часовой пояс")).toHaveValue("Asia/Novosibirsk");
+  await expect(
+    page.getByRole("option", { name: "11", selected: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("option", { name: "37", selected: true }),
+  ).toBeVisible();
 });
 test("mobile calendar, dialogs and navigation fit the screen", async ({
   page,
@@ -97,6 +115,21 @@ test("mobile calendar, dialogs and navigation fit the screen", async ({
   await page.getByLabel("Интервал врача").selectOption("12");
   await page.getByRole("button", { name: "Добавить в календарь" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page
+    .locator(".mobile-nav")
+    .getByRole("button", { name: "Уведомления" })
+    .click();
+  await page.getByRole("listbox", { name: "Минуты" }).evaluate((wheel) => {
+    wheel.scrollTop = 42 * 40;
+  });
+  await expect(
+    page.getByRole("option", { name: "42", selected: true }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    )
+    .toBe(true);
 });
 test("desktop screenshot", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1100 });

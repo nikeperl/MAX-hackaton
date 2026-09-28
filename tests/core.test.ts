@@ -118,7 +118,7 @@ test("MAX auth verifies signature, expiration, duplicates, future timestamps and
     validateInitData(sign({ ...values, user: '{"id":-1}' }), "test-token", now),
   );
 });
-test("timezone sends at user local hour", () => {
+test("timezone sends at the selected local hour and minute", () => {
   const now = new Date("2026-11-24T02:00:00Z");
   assert.equal(todayIn("Asia/Novosibirsk", now), "2026-11-24");
   const db = openDatabase(":memory:");
@@ -135,6 +135,15 @@ test("timezone sends at user local hour", () => {
     },
   };
   assert.equal(dueReminders(e, u, now)[0].kind, "days-7");
+  const precise = { ...u, settings: { ...u.settings, minute: 37 } };
+  assert.equal(
+    dueReminders(e, precise, new Date("2026-11-24T02:36:00Z")).length,
+    0,
+  );
+  assert.equal(
+    dueReminders(e, precise, new Date("2026-11-24T02:37:00Z")).length,
+    1,
+  );
   assert.equal(
     dueReminders(
       e,

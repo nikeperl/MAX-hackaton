@@ -85,14 +85,18 @@ export function dueReminders(event: Deadline, user: User, now: Date) {
   )
     return [];
   const today = todayIn(user.settings.timezone, now);
-  const hour = Number(
-    new Intl.DateTimeFormat("en-GB", {
-      timeZone: user.settings.timezone,
-      hour: "2-digit",
-      hourCycle: "h23",
-    }).format(now),
-  );
-  if (hour < user.settings.hour) return [];
+  const localTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: user.settings.timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(now);
+  const [hour, minute] = localTime.split(":").map(Number);
+  if (
+    hour < user.settings.hour ||
+    (hour === user.settings.hour && minute < user.settings.minute)
+  )
+    return [];
   const points = event.reminders.map((offset) => ({
     date: addDays(event.dueDate, -offset),
     kind: `days-${offset}`,

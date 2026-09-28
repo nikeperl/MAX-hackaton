@@ -78,13 +78,14 @@ checks:
         {
           enabled: true,
           hour: 9,
+          minute: 37,
           timezone: Asia/Novosibirsk,
           privateMessages: true,
         }
     expected:
       status: [200]
       content_type: application/json
-      required_fields: [enabled, hour, timezone, privateMessages]
+      required_fields: [enabled, hour, minute, timezone, privateMessages]
   - id: complete
     role: user
     method: PATCH

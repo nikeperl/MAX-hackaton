@@ -41,7 +41,10 @@ export function commandReply(db: DB, user: User, raw: string) {
   if (command === "/time") {
     const result = settingsSchema.safeParse({
       ...user.settings,
-      hour: /^\d{1,2}$/.test(args[0] || "") ? Number(args[0]) : -1,
+      hour: /^\d{1,2}(?::\d{2})?$/.test(args[0] || "")
+        ? Number(args[0].split(":")[0])
+        : -1,
+      minute: args[0]?.includes(":") ? Number(args[0].split(":")[1]) : 0,
       timezone: args[1] || "",
     });
     if (args.length !== 2 || !result.success) return chatCopy.legacy.chooseTime;

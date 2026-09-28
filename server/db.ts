@@ -44,7 +44,7 @@ export function getUser(db: DB, id: string): User | undefined {
     ? {
         id: row.id,
         name: row.name,
-        settings: JSON.parse(row.settings),
+        settings: { ...defaultSettings, ...JSON.parse(row.settings) },
         botStarted: !!row.bot_started,
         demo: !!row.demo,
       }

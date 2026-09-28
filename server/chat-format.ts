@@ -18,6 +18,7 @@ export function statusText(user: User) {
   return chatCopy.status(
     user.settings.enabled,
     user.settings.hour,
+    user.settings.minute,
     user.settings.timezone,
     user.settings.privateMessages,
   );

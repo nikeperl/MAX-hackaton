@@ -1508,6 +1508,65 @@ footer > span {
   flex: 1;
   min-width: 0;
 }
+.time-picker > strong {
+  color: #172443;
+}
+.time-picker > small {
+  color: #657493;
+  font-weight: 400;
+}
+.time-wheel-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.time-wheel-group > span {
+  color: #0756f5;
+  font-size: 22px;
+}
+.time-wheel-column {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+.time-wheel-column > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+}
+.time-wheel {
+  height: 200px;
+  overflow-y: auto;
+  padding: 80px 4px;
+  border: 1px solid #dee5f3;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(30, 67, 190, 0.08);
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+}
+.time-wheel:focus-visible {
+  outline: 3px solid #7295ee;
+  outline-offset: 2px;
+}
+.time-wheel [role="option"] {
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #8794af;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  scroll-snap-align: center;
+}
+.time-wheel [role="option"].selected {
+  color: #0756f5;
+  background: #eaf1ff;
+  font-weight: 750;
+}
 .back-link {
   font-size: 10px;
   margin-bottom: 2px;

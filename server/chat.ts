@@ -10,6 +10,7 @@ import {
   formatDate,
   isDate,
   todayIn,
+  settingsSchema,
   type Category,
   type TemplateId,
   type User,
@@ -288,11 +289,7 @@ export function chatReply(
         ...back,
       ]);
     }
-    if (action === "hours")
-      return reply(chatCopy.prompts.localHour, [
-        chatCopy.hours.map((hour) => button(`${hour}:00`, `hour:${hour}`)),
-        ...back,
-      ]);
+    if (action === "hours") return reply(chatCopy.prompts.localTime, back);
     if (action === "zones")
       return reply(chatCopy.prompts.timezone, [
         ...chatCopy.timezones.map((zone) => [
@@ -304,7 +301,7 @@ export function chatReply(
       const result = commandReply(
         db,
         user,
-        `/time ${action === "hour" ? arg : user.settings.hour} ${action === "zone" ? arg : user.settings.timezone}`,
+        `/time ${action === "hour" ? arg : `${user.settings.hour}:${String(user.settings.minute).padStart(2, "0")}`} ${action === "zone" ? arg : user.settings.timezone}`,
       );
       return reply(result, [
         [button(chatCopy.buttons.settings, "settings")],
@@ -325,6 +322,20 @@ export function chatReply(
   if (text.startsWith("/")) {
     clearDraft(db, user.id);
     return reply(commandReply(db, user, text));
+  }
+  if (/^\d{1,2}:\d{1,2}$/.test(text)) {
+    const valid = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(text);
+    if (!valid) return reply(chatCopy.messages.invalidTime, back);
+    const result = settingsSchema.parse({
+      ...user.settings,
+      hour: Number(valid[1]),
+      minute: Number(valid[2]),
+    });
+    saveSettings(db, user.id, result);
+    return reply(commandReply(db, getUser(db, user.id)!, "/settings"), [
+      [button(chatCopy.buttons.settings, "settings")],
+      ...back,
+    ]);
   }
   const draft = readDraft(db, user.id);
   if (draft) {

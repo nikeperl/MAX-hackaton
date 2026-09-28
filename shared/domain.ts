@@ -122,6 +122,7 @@ export function calculateDeadline(input: EventInput): {
 export const settingsSchema = z.object({
   enabled: z.boolean(),
   hour: z.number().int().min(0).max(23),
+  minute: z.number().int().min(0).max(59).default(0),
   timezone: z.string().refine((v) => {
     try {
       new Intl.DateTimeFormat("ru", { timeZone: v });
@@ -136,9 +137,15 @@ export type Settings = z.infer<typeof settingsSchema>;
 export const defaultSettings: Settings = {
   enabled: false,
   hour: 9,
+  minute: 0,
   timezone: "Europe/Moscow",
   privateMessages: true,
 };
+export function formatReminderTime(
+  settings: Pick<Settings, "hour" | "minute">,
+) {
+  return `${String(settings.hour).padStart(2, "0")}:${String(settings.minute).padStart(2, "0")}`;
+}
 export type User = {
   id: string;
   name: string;

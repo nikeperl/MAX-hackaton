@@ -101,10 +101,13 @@ test("button journey creates a service, recommends steps, configures reminders a
     assert.match(chat(`show:${event.id}`).text, /Аршин/);
     chat("enabled:on");
     chat("privacy:off");
-    chat("hour:8");
+    assert.match(chat("hours").text, /ЧЧ:ММ/);
+    assert.match(chat("25:70", false).text, /ЧЧ:ММ/);
+    assert.match(chat("08:37", false).text, /08:37/);
     chat("zone:Asia/Novosibirsk");
     const user = getUser(db, "42")!;
     assert.equal(user.settings.hour, 8);
+    assert.equal(user.settings.minute, 37);
     assert.equal(user.settings.timezone, "Asia/Novosibirsk");
     assert.equal(user.settings.enabled, true);
     assert.equal(user.settings.privateMessages, false);
@@ -134,6 +137,20 @@ test("button journey creates a service, recommends steps, configures reminders a
     assert.match(privateText, /Следующие действия/);
     chat(`done:${event.id}`);
     assert.equal(listEvents(db, "42")[0].completed, true);
+  } finally {
+    db.close();
+  }
+});
+
+test("saved settings without minutes keep the previous whole-hour schedule", () => {
+  const db = openDatabase(":memory:");
+  try {
+    const user = ensureUser(db, "legacy", "Тест");
+    db.prepare("UPDATE users SET settings=? WHERE id=?").run(
+      JSON.stringify({ ...user.settings, minute: undefined }),
+      user.id,
+    );
+    assert.equal(getUser(db, user.id)!.settings.minute, 0);
   } finally {
     db.close();
   }
